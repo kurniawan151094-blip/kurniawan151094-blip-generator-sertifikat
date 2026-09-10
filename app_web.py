@@ -15,7 +15,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Custom CSS Ringkas & Anti-Scroll Panjang di HP
+# Custom CSS Ringkas
 st.markdown("""
     <style>
         #MainMenu, footer, [data-testid="stToolbarActions"], [data-testid="stAppDeployButton"] {
@@ -24,7 +24,6 @@ st.markdown("""
         header { background: transparent !important; }
         .block-container { padding: 0.5rem 0.7rem 1.5rem 0.7rem !important; }
         
-        /* Header Ramping */
         .app-header {
             display: flex;
             align-items: center;
@@ -36,7 +35,6 @@ st.markdown("""
         .app-title { font-size: 1.1rem !important; font-weight: 800; color: #38BDF8; margin: 0; }
         .app-badge { background-color: #0C4A6E; color: #38BDF8; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
 
-        /* Desain Tab Menu Kompak */
         .stTabs [data-baseweb="tab-list"] {
             gap: 4px;
             background-color: #1E293B;
@@ -55,14 +53,12 @@ st.markdown("""
             border-radius: 6px;
         }
 
-        /* Tombol Dibuat Kompak Sejajar */
         div[data-testid="column"] button {
             padding: 0.35rem 0.2rem !important;
             font-size: 0.85rem !important;
             border-radius: 6px !important;
         }
 
-        /* Tombol Ekspor Utama */
         .stButton>button {
             width: 100%;
             background-color: #E11D48;
@@ -92,32 +88,43 @@ if "font_size" not in st.session_state:
     st.session_state.font_size = 90
 
 # ==========================================================
-# 2. MESIN FONT
+# 2. MESIN FONT (DIPERBAIKI: RESPONSIF TERHADAP UKURAN)
 # ==========================================================
 def get_font(font_choice, font_size, custom_font_file=None):
+    font_size = int(font_size)
+
+    # 1. Penanganan Font Kustom Upload (Reset Stream Bytes)
     if custom_font_file is not None:
         try:
-            return ImageFont.truetype(custom_font_file, font_size)
+            custom_font_file.seek(0)
+            return ImageFont.truetype(io.BytesIO(custom_font_file.getvalue()), font_size)
         except Exception:
             pass
 
+    # 2. Direktori Font di berbagai OS (Windows, Linux, MacOS)
     font_dirs = [
         os.path.join(os.environ.get('WINDIR', 'C:\\Windows'), 'Fonts'),
         "/usr/share/fonts",
         "/usr/share/fonts/truetype",
         "/usr/share/fonts/truetype/dejavu",
         "/usr/share/fonts/truetype/liberation",
+        "/usr/share/fonts/truetype/freefont",
+        "/Library/Fonts",
+        "/System/Library/Fonts",
         "."
     ]
+
     font_files = {
-        "Times New Roman (Formal)": ["times.ttf", "Times.ttf", "LiberationSerif-Regular.ttf"],
-        "Georgia (Elegan)": ["georgia.ttf", "Georgia.ttf"],
+        "Times New Roman (Formal)": ["times.ttf", "Times.ttf", "LiberationSerif-Regular.ttf", "DejaVuSerif.ttf"],
+        "Georgia (Elegan)": ["georgia.ttf", "Georgia.ttf", "LiberationSerif-Regular.ttf"],
         "Arial (Modern/Clean)": ["arial.ttf", "Arial.ttf", "LiberationSans-Regular.ttf", "DejaVuSans.ttf"],
-        "Edwardian Script (Latin Mewah)": ["edward.ttf", "EdwardianScriptITC.ttf"],
-        "Vivaldi (Latin Artistik)": ["vivaldii.ttf", "Vivaldi.ttf"],
-        "Monotype Corsiva (Latin Miring)": ["corsiva.ttf", "MTCORSVA.TTF"]
+        "Edwardian Script (Latin Mewah)": ["edward.ttf", "EdwardianScriptITC.ttf", "times.ttf"],
+        "Vivaldi (Latin Artistik)": ["vivaldii.ttf", "Vivaldi.ttf", "times.ttf"],
+        "Monotype Corsiva (Latin Miring)": ["corsiva.ttf", "MTCORSVA.TTF", "times.ttf"]
     }
-    for f_name in font_files.get(font_choice, ["arial.ttf"]):
+
+    # Cari file font sistem
+    for f_name in font_files.get(font_choice, ["arial.ttf", "DejaVuSans.ttf"]):
         for d in font_dirs:
             p = os.path.join(d, f_name)
             if os.path.exists(p):
@@ -129,10 +136,15 @@ def get_font(font_choice, font_size, custom_font_file=None):
             return ImageFont.truetype(f_name, font_size)
         except Exception:
             pass
-    return ImageFont.load_default()
+
+    # 3. Fallback: Dukung ukuran dinamis jika Pillow versi >= 10.1.0
+    try:
+        return ImageFont.load_default(size=font_size)
+    except TypeError:
+        return ImageFont.load_default()
 
 # ==========================================================
-# 3. AREA UPLOAD FILE (KOMPAK)
+# 3. AREA UPLOAD FILE
 # ==========================================================
 col_u1, col_u2 = st.columns(2)
 with col_u1:
@@ -144,7 +156,8 @@ with col_u2:
 # 4. WORKSPACE UTAMA
 # ==========================================================
 if cert_file is not None:
-    original_img = Image.open(cert_file)
+    # Memastikan format RGB agar stabil saat rendering teks
+    original_img = Image.open(cert_file).convert("RGB")
     orig_w, orig_h = original_img.size
 
     # Baca Excel
@@ -160,14 +173,14 @@ if cert_file is not None:
 
     sample_name = names[0] if names else "Nama Peserta Sertifikat"
 
-    # Di PC 2 Kolom, di HP Otomatis Bertumpuk
+    # Layout Kontrol & Preview
     col_preview, col_controls = st.columns([1.2, 1], gap="medium")
 
-    # --- TAB KONTROL KOMPAK & SEJAJAR ---
+    # --- TAB KONTROL ---
     with col_controls:
         tab_pos, tab_style, tab_process = st.tabs(["📐 Posisi", "🎨 Font & Gaya", "🚀 Ekspor"])
 
-        # TAB 1: POSISI (SEMUA SEJAJAR HORIZONTAL)
+        # TAB 1: POSISI
         with tab_pos:
             st.caption("📍 **Posisi Cepat (1 Baris):**")
             p1, p2, p3 = st.columns(3)
@@ -199,7 +212,7 @@ if cert_file is not None:
                 st.session_state.pos_x = min(95, st.session_state.pos_x + 3)
                 st.rerun()
 
-        # TAB 2: FONT & WARNA (SEJAJAR & UKURAN LANGSUNG BERUBAH)
+        # TAB 2: FONT & WARNA (DIPERBAIKI: Binding key='font_size')
         with tab_style:
             font_options = [
                 "Times New Roman (Formal)",
@@ -211,16 +224,16 @@ if cert_file is not None:
             ]
             selected_font = st.selectbox("Pilih Jenis Font:", font_options)
             
-            # Warna & Ukuran Font ditaruh 1 baris berdampingan
             f_col1, f_col2 = st.columns([1, 2.2])
             with f_col1:
                 text_color = st.color_picker("Warna Teks:", "#1E293B")
             with f_col2:
-                st.session_state.font_size = st.slider(
+                # Menggunakan key='font_size' langsung agar otomatis tersinkron ke session_state
+                st.slider(
                     "Ukuran Font (px):",
                     min_value=25,
                     max_value=220,
-                    value=st.session_state.font_size
+                    key="font_size"
                 )
             
             custom_ttf = st.file_uploader("Upload Font Sendiri (.ttf)", type=["ttf", "otf"])
@@ -233,7 +246,7 @@ if cert_file is not None:
                 st.success(f"✓ Siap memproses **{len(names)} sertifikat HD**.")
                 btn_start = st.button(f"⚡ GENERATE {len(names)} SERTIFIKAT")
 
-    # --- PANEL PREVIEW LANGSUNG (RESPONSIF) ---
+    # --- PANEL PREVIEW LANGSUNG ---
     with col_preview:
         target_center_x = int(orig_w * (st.session_state.pos_x / 100))
         target_center_y = int(orig_h * (st.session_state.pos_y / 100))
@@ -241,7 +254,7 @@ if cert_file is not None:
         preview_img = original_img.copy()
         draw_preview = ImageDraw.Draw(preview_img)
 
-        # Mengambil font sesuai ukuran yang sedang aktif di slider
+        # Ambil font sesuai ukuran slider saat ini
         font_preview = get_font(selected_font, st.session_state.font_size, custom_ttf)
         bbox = draw_preview.textbbox((0, 0), sample_name, font=font_preview)
         tw = bbox[2] - bbox[0]
@@ -255,7 +268,7 @@ if cert_file is not None:
             font=font_preview
         )
 
-        st.image(preview_img, caption="Pratinjau Desain Sertifikat", use_container_width=True)
+        st.image(preview_img, caption=f"Pratinjau Desain ({st.session_state.font_size}px)", use_container_width=True)
 
     # --- EKSEKUSI PEMBUATAN BATCH ZIP ---
     if cert_file is not None and names and 'btn_start' in locals() and btn_start:
@@ -265,6 +278,9 @@ if cert_file is not None:
                 status_text = st.empty()
 
                 zip_buffer = io.BytesIO()
+                # Optimasi: Load font 1 KALI saja di luar loop untuk efisiensi
+                font_hd = get_font(selected_font, st.session_state.font_size, custom_ttf)
+
                 with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
                     for idx, nama in enumerate(names, 1):
                         status_text.text(f"Memproses ({idx}/{len(names)}): {nama}")
@@ -273,7 +289,6 @@ if cert_file is not None:
                         cert_hd = original_img.copy()
                         draw_hd = ImageDraw.Draw(cert_hd)
 
-                        font_hd = get_font(selected_font, st.session_state.font_size, custom_ttf)
                         bbox_hd = draw_hd.textbbox((0, 0), nama, font=font_hd)
                         t_w = bbox_hd[2] - bbox_hd[0]
                         t_h = bbox_hd[3] - bbox_hd[1]
@@ -286,7 +301,7 @@ if cert_file is not None:
                         )
 
                         img_buffer = io.BytesIO()
-                        cert_hd.save(img_buffer, format="PNG", quality=100)
+                        cert_hd.save(img_buffer, format="PNG")
                         safe_name = "".join(x for x in nama if x.isalnum() or x in " _-")
                         zip_file.writestr(f"Sertifikat_{safe_name}.png", img_buffer.getvalue())
 
