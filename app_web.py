@@ -15,31 +15,51 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Custom CSS
+# Custom CSS Ringkas & Anti-Scroll Panjang di HP
 st.markdown("""
     <style>
         #MainMenu, footer, [data-testid="stToolbarActions"], [data-testid="stAppDeployButton"] {
             display: none !important;
         }
         header { background: transparent !important; }
-        .block-container { padding: 0.6rem 0.8rem 2rem 0.8rem !important; }
+        .block-container { padding: 0.5rem 0.7rem 1.5rem 0.7rem !important; }
         
-        /* Header Ringkas */
+        /* Header Ramping */
         .app-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 0.6rem;
-            padding-bottom: 0.4rem;
+            margin-bottom: 0.5rem;
+            padding-bottom: 0.3rem;
             border-bottom: 1px solid #334155;
         }
-        .app-title { font-size: 1.15rem !important; font-weight: 800; color: #38BDF8; margin: 0; }
+        .app-title { font-size: 1.1rem !important; font-weight: 800; color: #38BDF8; margin: 0; }
         .app-badge { background-color: #0C4A6E; color: #38BDF8; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
 
-        /* Tombol Arah Horizontal */
-        div[data-testid="column"] button {
-            padding: 0.4rem 0.2rem !important;
+        /* Desain Tab Menu Kompak */
+        .stTabs [data-baseweb="tab-list"] {
+            gap: 4px;
+            background-color: #1E293B;
+            padding: 3px;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+        }
+        .stTabs [data-baseweb="tab"] {
+            padding: 6px 12px !important;
             font-size: 0.85rem !important;
+            color: #94A3B8 !important;
+        }
+        .stTabs [aria-selected="true"] {
+            background-color: #E11D48 !important;
+            color: white !important;
+            border-radius: 6px;
+        }
+
+        /* Tombol Dibuat Kompak Sejajar */
+        div[data-testid="column"] button {
+            padding: 0.35rem 0.2rem !important;
+            font-size: 0.85rem !important;
+            border-radius: 6px !important;
         }
 
         /* Tombol Ekspor Utama */
@@ -59,11 +79,11 @@ st.markdown("""
 st.markdown("""
     <div class="app-header">
         <span class="app-title">⚡ CertifiKit Studio</span>
-        <span class="app-badge">Horizontal Controls</span>
+        <span class="app-badge">Compact Mobile</span>
     </div>
 """, unsafe_allow_html=True)
 
-# Session State untuk Menyimpan Nilai Posisi & Ukuran
+# Session State Posisi & Ukuran
 if "pos_x" not in st.session_state:
     st.session_state.pos_x = 50
 if "pos_y" not in st.session_state:
@@ -112,7 +132,7 @@ def get_font(font_choice, font_size, custom_font_file=None):
     return ImageFont.load_default()
 
 # ==========================================================
-# 3. AREA UPLOAD FILE
+# 3. AREA UPLOAD FILE (KOMPAK)
 # ==========================================================
 col_u1, col_u2 = st.columns(2)
 with col_u1:
@@ -121,13 +141,13 @@ with col_u2:
     excel_file = st.file_uploader("2. File Excel (.xlsx)", type=["xlsx", "xls"])
 
 # ==========================================================
-# 4. WORKSPACE PREVIEW & PENGATURAN HORIZONTAL
+# 4. WORKSPACE UTAMA
 # ==========================================================
 if cert_file is not None:
     original_img = Image.open(cert_file)
     orig_w, orig_h = original_img.size
 
-    # Baca data Excel
+    # Baca Excel
     names = []
     if excel_file is not None:
         try:
@@ -138,78 +158,82 @@ if cert_file is not None:
         except Exception:
             pass
 
-    sample_name = names[0] if names else "Nama Lengkap Peserta"
+    sample_name = names[0] if names else "Nama Peserta Sertifikat"
 
-    # Layout Sejajar di PC, Bertumpuk di HP
+    # Di PC 2 Kolom, di HP Otomatis Bertumpuk
     col_preview, col_controls = st.columns([1.2, 1], gap="medium")
 
-    # --- PANEL KONTROL KANAN ---
+    # --- TAB KONTROL KOMPAK & SEJAJAR ---
     with col_controls:
-        # A. KONTROL POSISI HORIZONTAL
-        st.write("📍 **Posisi Cepat:**")
-        p_c1, p_c2, p_c3 = st.columns(3)
-        if p_c1.button("⬆️ Atas"):
-            st.session_state.pos_x = 50
-            st.session_state.pos_y = 38
-            st.rerun()
-        if p_c2.button("⏺️ Tengah"):
-            st.session_state.pos_x = 50
-            st.session_state.pos_y = 52
-            st.rerun()
-        if p_c3.button("⬇️ Bawah"):
-            st.session_state.pos_x = 50
-            st.session_state.pos_y = 65
-            st.rerun()
+        tab_pos, tab_style, tab_process = st.tabs(["📐 Posisi", "🎨 Font & Gaya", "🚀 Ekspor"])
 
-        st.write("🎮 **Geser Arah:**")
-        d_c1, d_c2, d_c3, d_c4 = st.columns(4)
-        if d_c1.button("⬅️ Kiri"):
-            st.session_state.pos_x = max(5, st.session_state.pos_x - 3)
-            st.rerun()
-        if d_c2.button("➡️ Kanan"):
-            st.session_state.pos_x = min(95, st.session_state.pos_x + 3)
-            st.rerun()
-        if d_c3.button("⬆️ Naik"):
-            st.session_state.pos_y = max(5, st.session_state.pos_y - 3)
-            st.rerun()
-        if d_c4.button("⬇️ Turun"):
-            st.session_state.pos_y = min(95, st.session_state.pos_y + 3)
-            st.rerun()
+        # TAB 1: POSISI (SEMUA SEJAJAR HORIZONTAL)
+        with tab_pos:
+            st.caption("📍 **Posisi Cepat (1 Baris):**")
+            p1, p2, p3 = st.columns(3)
+            if p1.button("⬆️ Atas"):
+                st.session_state.pos_x = 50
+                st.session_state.pos_y = 38
+                st.rerun()
+            if p2.button("⏺️ Tengah"):
+                st.session_state.pos_x = 50
+                st.session_state.pos_y = 52
+                st.rerun()
+            if p3.button("⬇️ Bawah"):
+                st.session_state.pos_x = 50
+                st.session_state.pos_y = 66
+                st.rerun()
 
-        st.markdown("---")
+            st.caption("🎮 **Geser Halus (1 Baris):**")
+            d1, d2, d3, d4 = st.columns(4)
+            if d1.button("⬅️ Kiri"):
+                st.session_state.pos_x = max(5, st.session_state.pos_x - 3)
+                st.rerun()
+            if d2.button("⬆️ Naik"):
+                st.session_state.pos_y = max(5, st.session_state.pos_y - 3)
+                st.rerun()
+            if d3.button("⬇️ Turun"):
+                st.session_state.pos_y = min(95, st.session_state.pos_y + 3)
+                st.rerun()
+            if d4.button("➡️ Kanan"):
+                st.session_state.pos_x = min(95, st.session_state.pos_x + 3)
+                st.rerun()
 
-        # B. UKURAN TEKS & GAYA (LANGSUNG BERUBAH)
-        st.write("🔤 **Ukuran Font (Langsung Berubah):**")
-        st.session_state.font_size = st.slider(
-            "Tarik slider untuk mengubah ukuran:",
-            min_value=25,
-            max_value=220,
-            value=st.session_state.font_size,
-            label_visibility="collapsed"
-        )
+        # TAB 2: FONT & WARNA (SEJAJAR & UKURAN LANGSUNG BERUBAH)
+        with tab_style:
+            font_options = [
+                "Times New Roman (Formal)",
+                "Georgia (Elegan)",
+                "Arial (Modern/Clean)",
+                "Edwardian Script (Latin Mewah)",
+                "Vivaldi (Latin Artistik)",
+                "Monotype Corsiva (Latin Miring)"
+            ]
+            selected_font = st.selectbox("Pilih Jenis Font:", font_options)
+            
+            # Warna & Ukuran Font ditaruh 1 baris berdampingan
+            f_col1, f_col2 = st.columns([1, 2.2])
+            with f_col1:
+                text_color = st.color_picker("Warna Teks:", "#1E293B")
+            with f_col2:
+                st.session_state.font_size = st.slider(
+                    "Ukuran Font (px):",
+                    min_value=25,
+                    max_value=220,
+                    value=st.session_state.font_size
+                )
+            
+            custom_ttf = st.file_uploader("Upload Font Sendiri (.ttf)", type=["ttf", "otf"])
 
-        font_options = [
-            "Times New Roman (Formal)",
-            "Georgia (Elegan)",
-            "Arial (Modern/Clean)",
-            "Edwardian Script (Latin Mewah)",
-            "Vivaldi (Latin Artistik)",
-            "Monotype Corsiva (Latin Miring)"
-        ]
-        selected_font = st.selectbox("Pilih Jenis Font:", font_options)
-        custom_ttf = st.file_uploader("Upload Font (.ttf) Opsional", type=["ttf", "otf"])
-        text_color = st.color_picker("Pilih Warna Teks:", "#1E293B")
+        # TAB 3: EKSPOR DATA
+        with tab_process:
+            if not names:
+                st.warning("⚠️ Upload file Excel di atas untuk memproses nama peserta massal.")
+            else:
+                st.success(f"✓ Siap memproses **{len(names)} sertifikat HD**.")
+                btn_start = st.button(f"⚡ GENERATE {len(names)} SERTIFIKAT")
 
-        st.markdown("---")
-
-        # C. PROSES & UNDUH
-        if not names:
-            st.warning("⚠️ Upload file Excel di atas untuk memproses nama peserta massal.")
-        else:
-            st.success(f"✓ Siap memproses **{len(names)} sertifikat HD**.")
-            btn_start = st.button(f"⚡ GENERATE {len(names)} SERTIFIKAT")
-
-    # --- PANEL PREVIEW KIRI ---
+    # --- PANEL PREVIEW LANGSUNG (RESPONSIF) ---
     with col_preview:
         target_center_x = int(orig_w * (st.session_state.pos_x / 100))
         target_center_y = int(orig_h * (st.session_state.pos_y / 100))
@@ -217,13 +241,13 @@ if cert_file is not None:
         preview_img = original_img.copy()
         draw_preview = ImageDraw.Draw(preview_img)
 
-        # Menggunakan ukuran font langsung dari slider
+        # Mengambil font sesuai ukuran yang sedang aktif di slider
         font_preview = get_font(selected_font, st.session_state.font_size, custom_ttf)
         bbox = draw_preview.textbbox((0, 0), sample_name, font=font_preview)
         tw = bbox[2] - bbox[0]
         th = bbox[3] - bbox[1]
 
-        # Gambar teks di tengah koordinat
+        # Render teks di tengah target
         draw_preview.text(
             (target_center_x - (tw / 2), target_center_y - (th / 2)),
             sample_name,
@@ -231,49 +255,50 @@ if cert_file is not None:
             font=font_preview
         )
 
-        st.image(preview_img, caption="Pratinjau Sertifikat (Hasil Bersih)", use_container_width=True)
+        st.image(preview_img, caption="Pratinjau Desain Sertifikat", use_container_width=True)
 
-    # --- EKSEKUSI BATCH GENERATE ---
+    # --- EKSEKUSI PEMBUATAN BATCH ZIP ---
     if cert_file is not None and names and 'btn_start' in locals() and btn_start:
         with col_controls:
-            progress_bar = st.progress(0)
-            status_text = st.empty()
+            with tab_process:
+                progress_bar = st.progress(0)
+                status_text = st.empty()
 
-            zip_buffer = io.BytesIO()
-            with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
-                for idx, nama in enumerate(names, 1):
-                    status_text.text(f"Membuat ({idx}/{len(names)}): {nama}")
-                    progress_bar.progress(idx / len(names))
+                zip_buffer = io.BytesIO()
+                with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+                    for idx, nama in enumerate(names, 1):
+                        status_text.text(f"Memproses ({idx}/{len(names)}): {nama}")
+                        progress_bar.progress(idx / len(names))
 
-                    cert_hd = original_img.copy()
-                    draw_hd = ImageDraw.Draw(cert_hd)
+                        cert_hd = original_img.copy()
+                        draw_hd = ImageDraw.Draw(cert_hd)
 
-                    font_hd = get_font(selected_font, st.session_state.font_size, custom_ttf)
-                    bbox_hd = draw_hd.textbbox((0, 0), nama, font=font_hd)
-                    t_w = bbox_hd[2] - bbox_hd[0]
-                    t_h = bbox_hd[3] - bbox_hd[1]
+                        font_hd = get_font(selected_font, st.session_state.font_size, custom_ttf)
+                        bbox_hd = draw_hd.textbbox((0, 0), nama, font=font_hd)
+                        t_w = bbox_hd[2] - bbox_hd[0]
+                        t_h = bbox_hd[3] - bbox_hd[1]
 
-                    draw_hd.text(
-                        (target_center_x - (t_w / 2), target_center_y - (t_h / 2)),
-                        nama,
-                        fill=text_color,
-                        font=font_hd
-                    )
+                        draw_hd.text(
+                            (target_center_x - (t_w / 2), target_center_y - (t_h / 2)),
+                            nama,
+                            fill=text_color,
+                            font=font_hd
+                        )
 
-                    img_buffer = io.BytesIO()
-                    cert_hd.save(img_buffer, format="PNG", quality=100)
-                    safe_name = "".join(x for x in nama if x.isalnum() or x in " _-")
-                    zip_file.writestr(f"Sertifikat_{safe_name}.png", img_buffer.getvalue())
+                        img_buffer = io.BytesIO()
+                        cert_hd.save(img_buffer, format="PNG", quality=100)
+                        safe_name = "".join(x for x in nama if x.isalnum() or x in " _-")
+                        zip_file.writestr(f"Sertifikat_{safe_name}.png", img_buffer.getvalue())
 
-            status_text.success("🎉 Semua sertifikat HD selesai dibuat!")
-            progress_bar.empty()
+                status_text.success("🎉 Semua sertifikat HD selesai dibuat!")
+                progress_bar.empty()
 
-            st.download_button(
-                label="📥 DOWNLOAD FILE ZIP",
-                data=zip_buffer.getvalue(),
-                file_name="Hasil_Sertifikat_HD.zip",
-                mime="application/zip"
-            )
+                st.download_button(
+                    label="📥 DOWNLOAD FILE ZIP",
+                    data=zip_buffer.getvalue(),
+                    file_name="Hasil_Sertifikat_HD.zip",
+                    mime="application/zip"
+                )
 
 else:
-    st.info("👆 Upload file desain sertifikat Anda di atas untuk mulai.")
+    st.info("👆 Upload desain sertifikat Anda di kotak atas untuk mulai.")
