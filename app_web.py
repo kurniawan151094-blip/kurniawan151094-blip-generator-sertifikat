@@ -16,25 +16,32 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Custom CSS Modern & Bersih
+# Custom CSS Responsif HP
 st.markdown("""
     <style>
         #MainMenu, footer, [data-testid="stToolbarActions"], [data-testid="stAppDeployButton"] {
             display: none !important;
         }
         header { background: transparent !important; }
-        .block-container { padding: 0.8rem 1rem 2rem 1rem !important; }
+        .block-container { padding: 0.6rem 0.8rem 2rem 0.8rem !important; }
         
         .app-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 0.8rem;
-            padding-bottom: 0.5rem;
+            margin-bottom: 0.6rem;
+            padding-bottom: 0.4rem;
             border-bottom: 1px solid #334155;
         }
-        .app-title { font-size: 1.2rem !important; font-weight: 800; color: #38BDF8; margin: 0; }
-        .app-badge { background-color: #0C4A6E; color: #38BDF8; font-size: 0.75rem; padding: 2px 8px; border-radius: 6px; font-weight: 600; }
+        .app-title { font-size: 1.15rem !important; font-weight: 800; color: #38BDF8; margin: 0; }
+        .app-badge { background-color: #0C4A6E; color: #38BDF8; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
+        
+        /* Pastikan kanvas tidak meluber keluar layar HP */
+        iframe {
+            max-width: 100% !important;
+            border-radius: 8px;
+            border: 1px solid #334155;
+        }
         
         .stButton>button {
             width: 100%;
@@ -52,7 +59,7 @@ st.markdown("""
 st.markdown("""
     <div class="app-header">
         <span class="app-title">⚡ CertifiKit Studio</span>
-        <span class="app-badge">Interactive Canvas</span>
+        <span class="app-badge">Mobile Responsive</span>
     </div>
 """, unsafe_allow_html=True)
 
@@ -125,7 +132,7 @@ with col_u2:
     excel_file = st.file_uploader("2. File Excel (.xlsx)", type=["xlsx", "xls"])
 
 # ==========================================================
-# 4. KANVAS INTERAKTIF & PENGATURAN
+# 4. KANVAS & KONTROL
 # ==========================================================
 if cert_file is not None:
     original_img = Image.open(cert_file)
@@ -142,13 +149,57 @@ if cert_file is not None:
         except Exception:
             pass
 
-    sample_name = names[0] if names else "Nama Peserta Sertifikat"
+    # Pengaturan Tampilan Kanvas agar PAS di Layar HP
+    st.markdown("---")
+    ctrl_col1, ctrl_col2 = st.columns([1, 1])
+    with ctrl_col1:
+        device_view = st.radio("📱 Ukuran Layar:", ["📱 Pas Layar HP (340px)", "💻 Layar Laptop (600px)"], horizontal=True)
+        display_w = 340 if "HP" in device_view else 600
+    with ctrl_col2:
+        action_mode = st.radio("✋ Mode Sentuh Kanvas:", ["✏️ Tarik Kotak Baru", "✋ Geser / Ubah Ukuran"], horizontal=True)
+        drawing_mode = "rect" if "Tarik" in action_mode else "transform"
 
-    # Layout: Kanvas di kiri, Pilihan Gaya & Ekspor di kanan
-    col_canvas, col_tools = st.columns([1.3, 1], gap="medium")
+    # Skala Kanvas
+    scale_ratio = orig_w / display_w
+    display_h = int(orig_h / scale_ratio)
+    preview_bg = original_img.resize((display_w, display_h), Image.Resampling.LANCZOS)
+
+    # Layout Sejajar di PC, Bertumpuk di HP
+    col_canvas, col_tools = st.columns([1.2, 1], gap="medium")
+
+    with col_canvas:
+        st.caption("👉 **Cara pakai:** Pilih '✏️ Tarik Kotak Baru' untuk buat area nama. Pilih '✋ Geser' lalu sentuh kotaknya untuk memindahkan.")
+        
+        canvas_result = st_canvas(
+            fill_color="rgba(56, 189, 248, 0.25)",
+            stroke_width=2,
+            stroke_color="#38BDF8",
+            background_image=preview_bg,
+            update_streamlit=True,
+            height=display_h,
+            width=display_w,
+            drawing_mode=drawing_mode,
+            key=f"canvas_{display_w}_{drawing_mode}"
+        )
+
+    # Baca Koordinat Kotak
+    box_coords = None
+    if canvas_result.json_data is not None and len(canvas_result.json_data["objects"]) > 0:
+        rect = canvas_result.json_data["objects"][-1]
+        c_left = rect.get("left", 0)
+        c_top = rect.get("top", 0)
+        c_width = rect.get("width", 0) * rect.get("scaleX", 1)
+        c_height = rect.get("height", 0) * rect.get("scaleY", 1)
+
+        if c_width > 15 and c_height > 10:
+            hd_x = int(c_left * scale_ratio)
+            hd_y = int(c_top * scale_ratio)
+            hd_w = int(c_width * scale_ratio)
+            hd_h = int(c_height * scale_ratio)
+            box_coords = (hd_x, hd_y, hd_w, hd_h)
 
     with col_tools:
-        st.subheader("🎨 Pilihan Font & Warna")
+        st.subheader("🎨 Gaya Huruf & Warna")
         font_options = [
             "Times New Roman (Formal)",
             "Georgia (Elegan)",
@@ -158,74 +209,24 @@ if cert_file is not None:
             "Monotype Corsiva (Latin Miring)"
         ]
         selected_font = st.selectbox("Pilih Font:", font_options)
-        custom_ttf = st.file_uploader("Upload Font (.ttf)", type=["ttf", "otf"])
+        custom_ttf = st.file_uploader("Upload Font Sendiri (.ttf)", type=["ttf", "otf"])
 
-        c_w1, c_w2 = st.columns(2)
-        with c_w1:
+        sub_col1, sub_col2 = st.columns(2)
+        with sub_col1:
             text_color = st.color_picker("Warna Teks:", "#1E293B")
-        with c_w2:
+        with sub_col2:
             max_font_size = st.number_input("Max Font (px):", min_value=20, max_value=250, value=110, step=5)
 
-        st.markdown("---")
-        mode_canvas = st.radio("Mode Kursor Kanvas:", ["Tarik Kotak Baru (Draw)", "Geser / Perbesar Kotak (Transform)"], horizontal=True)
-
-    with col_canvas:
-        st.subheader("🖱️ Kanvas Sertifikat Langsung")
-        st.caption("👉 **Tarik kotak** dengan jari/mouse pada gambar. Kotak bisa digeser atau diubah ukurannya!")
-
-        # Hitung ukuran kanvas web (skala 650px agar pas di layar laptop & HP)
-        display_w = 650
-        scale_ratio = orig_w / display_w
-        display_h = int(orig_h / scale_ratio)
-
-        preview_bg = original_img.resize((display_w, display_h), Image.Resampling.LANCZOS)
-
-        # Kanvas Interaktif Streamlit
-        drawing_mode = "rect" if "Draw" in mode_canvas else "transform"
-        
-        canvas_result = st_canvas(
-            fill_color="rgba(56, 189, 248, 0.2)",  # Warna transparan kotak seleksi
-            stroke_width=2,
-            stroke_color="#38BDF8",
-            background_image=preview_bg,
-            update_streamlit=True,
-            height=display_h,
-            width=display_w,
-            drawing_mode=drawing_mode,
-            key="cert_canvas"
-        )
-
-    # Membaca data koordinat kotak dari kanvas
-    box_coords = None
-    if canvas_result.json_data is not None and len(canvas_result.json_data["objects"]) > 0:
-        # Ambil objek kotak terakhir
-        rect = canvas_result.json_data["objects"][-1]
-        
-        c_left = rect.get("left", 0)
-        c_top = rect.get("top", 0)
-        c_width = rect.get("width", 0) * rect.get("scaleX", 1)
-        c_height = rect.get("height", 0) * rect.get("scaleY", 1)
-
-        if c_width > 20 and c_height > 10:
-            # Konversi skala kanvas ke skala HD asli gambar
-            hd_x = int(c_left * scale_ratio)
-            hd_y = int(c_top * scale_ratio)
-            hd_w = int(c_width * scale_ratio)
-            hd_h = int(c_height * scale_ratio)
-            box_coords = (hd_x, hd_y, hd_w, hd_h)
-
-    # Panel Ekspor
-    with col_tools:
         st.markdown("---")
         st.subheader("🚀 Proses Data")
         
         if box_coords is None:
-            st.info("👆 Buat area kotak nama terlebih dahulu di kanvas sebelah kiri.")
+            st.info("👆 Buat area kotak nama terlebih dahulu di kanvas di atas/sebelah kiri.")
         elif not names:
-            st.warning("⚠️ Upload file Excel di atas untuk memproses nama-nama peserta.")
+            st.warning("⚠️ Upload file Excel di atas untuk mulai membuat sertifikat massal.")
         else:
-            st.success(f"✓ Area terkunci! Siap memproses **{len(names)} sertifikat HD**.")
-            if st.button(f"⚡ GENERATE {len(names)} SERTIFIKAT (HD)"):
+            st.success(f"✓ Area aktif ({box_coords[2]}x{box_coords[3]}px)! Siap memproses **{len(names)} sertifikat**.")
+            if st.button(f"⚡ PROSES {len(names)} SERTIFIKAT (HD)"):
                 hd_x, hd_y, hd_w, hd_h = box_coords
                 center_box_x = hd_x + (hd_w / 2)
                 center_box_y = hd_y + (hd_h / 2)
@@ -236,7 +237,7 @@ if cert_file is not None:
                 zip_buffer = io.BytesIO()
                 with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
                     for idx, nama in enumerate(names, 1):
-                        status_text.text(f"Membuat ({idx}/{len(names)}): {nama}")
+                        status_text.text(f"Memproses ({idx}/{len(names)}): {nama}")
                         progress_bar.progress(idx / len(names))
 
                         cert_hd = original_img.copy()
@@ -259,15 +260,15 @@ if cert_file is not None:
                         safe_name = "".join(x for x in nama if x.isalnum() or x in " _-")
                         zip_file.writestr(f"Sertifikat_{safe_name}.png", img_buffer.getvalue())
 
-                status_text.success("🎉 Berhasil dibuat dalam kualitas HD!")
+                status_text.success("🎉 Berhasil selesai dibuat!")
                 progress_bar.empty()
 
                 st.download_button(
-                    label="📥 DOWNLOAD SEMUA SERTIFIKAT (.ZIP)",
+                    label="📥 DOWNLOAD FILE ZIP",
                     data=zip_buffer.getvalue(),
                     file_name="Hasil_Sertifikat_HD.zip",
                     mime="application/zip"
                 )
 
 else:
-    st.info("👆 Silakan upload file desain sertifikat Anda di atas untuk membuka kanvas.")
+    st.info("👆 Upload desain sertifikat Anda di kotak atas untuk membuka kanvas.")
