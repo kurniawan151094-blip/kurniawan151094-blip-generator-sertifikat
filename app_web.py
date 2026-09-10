@@ -16,14 +16,14 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Custom CSS: Memaksa Tombol Posisi Berdampingan Horizontal di Semua Layar
+# Custom CSS Anti-Stacking untuk Mobile
 st.markdown("""
     <style>
         #MainMenu, footer, [data-testid="stToolbarActions"], [data-testid="stAppDeployButton"] {
             display: none !important;
         }
         header { background: transparent !important; }
-        .block-container { padding: 0.5rem 0.7rem 1.5rem 0.7rem !important; }
+        .block-container { padding: 0.5rem 0.6rem 1.5rem 0.6rem !important; }
         
         .app-header {
             display: flex;
@@ -45,8 +45,8 @@ st.markdown("""
             margin-bottom: 0.5rem;
         }
         .stTabs [data-baseweb="tab"] {
-            padding: 6px 12px !important;
-            font-size: 0.85rem !important;
+            padding: 6px 10px !important;
+            font-size: 0.82rem !important;
             color: #94A3B8 !important;
         }
         .stTabs [aria-selected="true"] {
@@ -55,40 +55,55 @@ st.markdown("""
             border-radius: 6px;
         }
 
-        /* KUNCI: MEMAKSA TOMBOL POSISI SELALU HORIZONTAL BERDAMPINGAN DI HP MAUPUN PC */
-        div[data-testid="stTabsContent"] div[data-testid="stHorizontalBlock"] {
+        /* ==========================================================
+           KUNCI UTAMA: MEMAKSA TOMBOL HORIZONTAL DI HP
+           Targetkan [data-baseweb="tab-panel"] dan [data-testid="stColumn"]
+           ========================================================== */
+        div[data-baseweb="tab-panel"] div[data-testid="stHorizontalBlock"],
+        .stTabs div[data-testid="stHorizontalBlock"] {
             display: flex !important;
             flex-direction: row !important;
             flex-wrap: nowrap !important;
-            gap: 6px !important;
-            width: 100% !important;
-        }
-        div[data-testid="stTabsContent"] div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
-            flex: 1 1 0% !important;
-            min-width: 0 !important;
+            gap: 5px !important;
             width: 100% !important;
         }
 
-        /* Desain Tombol Navigasi Posisi */
-        div[data-testid="stTabsContent"] div[data-testid="stHorizontalBlock"] button {
+        /* Batalkan paksa aturan Streamlit mobile yang membuat kolom 100% */
+        div[data-baseweb="tab-panel"] div[data-testid="stHorizontalBlock"] > div[data-testid="column"],
+        div[data-baseweb="tab-panel"] div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"],
+        .stTabs div[data-testid="stHorizontalBlock"] > div[data-testid="column"],
+        .stTabs div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"] {
+            flex: 1 1 0px !important;
+            width: 1% !important;
+            min-width: 0 !important;
+            max-width: 100% !important;
+        }
+
+        /* Styling Tombol di dalam Tab agar muat 1 baris di HP */
+        div[data-baseweb="tab-panel"] div[data-testid="stHorizontalBlock"] button,
+        .stTabs div[data-testid="stHorizontalBlock"] button {
             width: 100% !important;
-            padding: 0.45rem 0.2rem !important;
-            font-size: 0.8rem !important;
+            min-width: 0 !important;
+            height: 38px !important;
+            padding: 4px 2px !important;
+            font-size: 0.75rem !important;
             font-weight: 600 !important;
             white-space: nowrap !important;
             border-radius: 6px !important;
             background-color: #1E293B !important;
             color: #F1F5F9 !important;
             border: 1px solid #334155 !important;
-            transition: all 0.15s ease-in-out !important;
+            box-sizing: border-box !important;
         }
-        div[data-testid="stTabsContent"] div[data-testid="stHorizontalBlock"] button:hover {
+
+        div[data-baseweb="tab-panel"] div[data-testid="stHorizontalBlock"] button:hover,
+        .stTabs div[data-testid="stHorizontalBlock"] button:hover {
             background-color: #334155 !important;
             border-color: #38BDF8 !important;
             color: #38BDF8 !important;
         }
 
-        /* Tombol Ekspor Utama (Primary) */
+        /* Tombol Ekspor Utama */
         button[kind="primary"] {
             width: 100% !important;
             background-color: #E11D48 !important;
@@ -98,6 +113,7 @@ st.markdown("""
             padding: 0.65rem 1rem !important;
             border: none !important;
             font-size: 0.95rem !important;
+            height: auto !important;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -105,7 +121,7 @@ st.markdown("""
 st.markdown("""
     <div class="app-header">
         <span class="app-title">⚡ CertifiKit Studio</span>
-        <span class="app-badge">Pro Studio</span>
+        <span class="app-badge">Pro Mobile</span>
     </div>
 """, unsafe_allow_html=True)
 
@@ -185,7 +201,7 @@ FONT_CATEGORIES = {
     }
 }
 
-# Session State
+# Inisialisasi State
 if "pos_x" not in st.session_state:
     st.session_state.pos_x = 50
 if "pos_y" not in st.session_state:
@@ -283,32 +299,44 @@ if cert_file is not None:
     with col_controls:
         tab_pos, tab_style, tab_process = st.tabs(["📐 Posisi", "🎨 Font & Gaya", "🚀 Ekspor"])
 
-        # TAB 1: POSISI (BERDAMPINGAN HORIZONTAL 1 BARIS)
+        # TAB 1: POSISI (PASTI 1 BARIS HORIZONTAL DI HP)
         with tab_pos:
-            st.caption("📍 **Posisi Cepat (Horizontal):**")
+            st.caption("📍 **Posisi Cepat:**")
             p1, p2, p3 = st.columns(3)
-            if p1.button("⬆️ Atas", use_container_width=True):
-                st.session_state.pos_x = 50
-                st.session_state.pos_y = 38
-            if p2.button("⏺️ Tengah", use_container_width=True):
-                st.session_state.pos_x = 50
-                st.session_state.pos_y = 52
-            if p3.button("⬇️ Bawah", use_container_width=True):
-                st.session_state.pos_x = 50
-                st.session_state.pos_y = 66
+            with p1:
+                if st.button("⬆️ Atas", use_container_width=True):
+                    st.session_state.pos_x = 50
+                    st.session_state.pos_y = 38
+            with p2:
+                if st.button("⏺️ Tengah", use_container_width=True):
+                    st.session_state.pos_x = 50
+                    st.session_state.pos_y = 52
+            with p3:
+                if st.button("⬇️ Bawah", use_container_width=True):
+                    st.session_state.pos_x = 50
+                    st.session_state.pos_y = 66
 
-            st.caption("🎮 **Geser Halus (Horizontal):**")
+            st.caption("🎮 **Geser Halus:**")
             d1, d2, d3, d4 = st.columns(4)
-            if d1.button("⬅️ Kiri", use_container_width=True):
-                st.session_state.pos_x = max(5, st.session_state.pos_x - 3)
-            if d2.button("⬆️ Naik", use_container_width=True):
-                st.session_state.pos_y = max(5, st.session_state.pos_y - 3)
-            if d3.button("⬇️ Turun", use_container_width=True):
-                st.session_state.pos_y = min(95, st.session_state.pos_y + 3)
-            if d4.button("➡️ Kanan", use_container_width=True):
-                st.session_state.pos_x = min(95, st.session_state.pos_x + 3)
+            with d1:
+                if st.button("⬅️ Kiri", use_container_width=True):
+                    st.session_state.pos_x = max(5, st.session_state.pos_x - 3)
+            with d2:
+                if st.button("⬆️ Naik", use_container_width=True):
+                    st.session_state.pos_y = max(5, st.session_state.pos_y - 3)
+            with d3:
+                if st.button("⬇️ Turun", use_container_width=True):
+                    st.session_state.pos_y = min(95, st.session_state.pos_y + 3)
+            with d4:
+                if st.button("➡️ Kanan", use_container_width=True):
+                    st.session_state.pos_x = min(95, st.session_state.pos_x + 3)
 
-            st.markdown(f"<div style='margin-top: 8px; font-size: 0.8rem; color: #94A3B8; text-align: center; background: #0F172A; padding: 4px; border-radius: 6px; border: 1px solid #334155;'>📌 Posisi Saat Ini: <b>X: {st.session_state.pos_x}% | Y: {st.session_state.pos_y}%</b></div>", unsafe_allow_html=True)
+            st.markdown(
+                f"<div style='margin-top: 8px; font-size: 0.8rem; color: #94A3B8; text-align: center; background: #0F172A; padding: 4px; border-radius: 6px; border: 1px solid #334155;'>"
+                f"📌 Koordinat: <b>X = {st.session_state.pos_x}% | Y = {st.session_state.pos_y}%</b>"
+                f"</div>",
+                unsafe_allow_html=True
+            )
 
         # TAB 2: FONT & GAYA
         with tab_style:
