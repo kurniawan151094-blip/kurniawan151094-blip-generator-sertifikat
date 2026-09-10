@@ -5,9 +5,9 @@ import pandas as pd
 from PIL import Image, ImageDraw, ImageFont
 import streamlit as st
 
-# ==========================================
-# KONFIGURASI HALAMAN (RESPONSIF MOBILE & PC)
-# ==========================================
+# ==========================================================
+# 1. KONFIGURASI HALAMAN
+# ==========================================================
 st.set_page_config(
     page_title="CertifiKit Web — Certificate Engine",
     page_icon="⚡",
@@ -15,45 +15,78 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS untuk tampilan Dark Modern ala SaaS
+# ==========================================================
+# 2. CUSTOM CSS (HANYA HAPUS GITHUB, MENU SIDEBAR TETAP ADA)
+# ==========================================================
 st.markdown("""
     <style>
-        .block-container { padding-top: 1.5rem; padding-bottom: 2rem; }
+        /* 1. Sembunyikan HANYA tombol GitHub dan menu bawaan Streamlit */
+        #MainMenu {display: none !important;}
+        footer {display: none !important;}
+        [data-testid="stToolbarActions"] {display: none !important;}
+        [data-testid="stAppDeployButton"] {display: none !important;}
+        .viewerBadge_container__1QSob {display: none !important;}
+        
+        /* 2. Header dibuat transparan tapi tombol menu sidebar TETAP BISA DIKLIK */
+        header {
+            background: transparent !important;
+        }
+        
+        /* 3. Pastikan tombol panah pembuka sidebar terlihat jelas */
+        [data-testid="stSidebarCollapseButton"] {
+            visibility: visible !important;
+            display: block !important;
+        }
+        [data-testid="collapsedControl"] {
+            visibility: visible !important;
+            display: block !important;
+        }
+
+        /* 4. Tata letak */
+        .block-container {
+            padding-top: 2rem;
+            padding-bottom: 2rem;
+        }
+        
+        /* 5. Tombol Aksen Merah Modern */
         .stButton>button {
             width: 100%;
             background-color: #E11D48;
             color: white;
             font-weight: bold;
             border-radius: 8px;
-            padding: 0.6rem 1rem;
+            padding: 0.65rem 1rem;
             border: none;
+            transition: all 0.3s ease;
         }
         .stButton>button:hover {
             background-color: #BE123C;
             color: white;
+            box-shadow: 0 4px 12px rgba(225, 29, 72, 0.4);
         }
     </style>
 """, unsafe_allow_html=True)
 
+# Judul Utama Web
 st.title("⚡ CertifiKit Web Studio")
-st.caption("Generator Sertifikat HD Otomatis — Bisa Diakses dari Laptop & HP Android")
+st.caption("Generator Sertifikat HD Otomatis — Akses Mudah via Laptop & HP")
 
-# ==========================================
-# MESIN PENCARI FONT (MENDUKUNG WINDOWS, LINUX & CLOUD)
-# ==========================================
+# ==========================================================
+# 3. ENGINE RESOLVER FONT
+# ==========================================================
 def get_font(font_choice, font_size, custom_font_file=None):
-    # Jika user upload font custom (.ttf)
     if custom_font_file is not None:
         try:
             return ImageFont.truetype(custom_font_file, font_size)
         except Exception:
             pass
 
-    # Direktori font standar
     font_dirs = [
         os.path.join(os.environ.get('WINDIR', 'C:\\Windows'), 'Fonts'),
         "/usr/share/fonts",
         "/usr/share/fonts/truetype",
+        "/usr/share/fonts/truetype/dejavu",
+        "/usr/share/fonts/truetype/liberation",
         "."
     ]
     
@@ -102,16 +135,16 @@ def get_auto_fit_font(nama, max_w, max_h, max_allowed_font, font_choice, custom_
 
     return get_font(font_choice, font_size, custom_font_file)
 
-# ==========================================
-# SIDEBAR: PENGATURAN & INPUT FILE
-# ==========================================
+# ==========================================================
+# 4. SIDEBAR PENGATURAN (INPUT DATA & TATA LETAK)
+# ==========================================================
 with st.sidebar:
     st.header("📁 1. Upload File")
     cert_file = st.file_uploader("Upload Desain Sertifikat (JPG/PNG)", type=["png", "jpg", "jpeg"])
     excel_file = st.file_uploader("Upload File Excel (.xlsx)", type=["xlsx", "xls"])
     
     st.markdown("---")
-    st.header("🎨 2. Kustomisasi Teks")
+    st.header("🎨 2. Pilihan Font & Warna")
     font_options = [
         "Times New Roman (Formal)",
         "Georgia (Elegan)",
@@ -127,41 +160,38 @@ with st.sidebar:
     max_font_size = st.slider("Batas Maksimal Ukuran Font:", 30, 200, 100)
 
     st.markdown("---")
-    st.header("📐 3. Posisi Nama (Sentuh / Geser)")
+    st.header("📐 3. Posisi Nama (Sentuh / Slider)")
     pos_x_pct = st.slider("Posisi Horizontal (Kiri ➔ Kanan %):", 0, 100, 50, help="50% adalah tepat di tengah")
     pos_y_pct = st.slider("Posisi Vertikal (Atas ➔ Bawah %):", 0, 100, 55)
     max_w_pct = st.slider("Batas Lebar Area Teks (%):", 20, 95, 75, help="Mencegah nama panjang keluar dari sertifikat")
 
-# ==========================================
-# WORKSPACE UTAMA (PREVIEW & PROSES)
-# ==========================================
+# ==========================================================
+# 5. WORKSPACE UTAMA (LIVE PREVIEW & PROSES DATA)
+# ==========================================================
 if cert_file is not None:
     original_img = Image.open(cert_file)
     orig_w, orig_h = original_img.size
 
-    # Baca data Excel jika tersedia
     names = []
     if excel_file is not None:
         try:
             df = pd.read_excel(excel_file)
             df.columns = [str(c).strip() for c in df.columns]
-            col_target = next((c for c in df.columns if c.lower() in ['nama', 'name', 'peserta']), df.columns[0])
-            names = [str(n).strip() for n in df[col_target].dropna().tolist() if str(n).strip() != ""]
+            col_target = next((c for c in df.columns if c.lower() in ['nama', 'name', 'peserta', 'nama lengkap']), df.columns[0])
+            names = [str(n).strip() for n in df[col_target].dropna().tolist() if str(n).strip() != "" and str(n).lower() != "nan"]
             st.sidebar.success(f"✓ Terbaca {len(names)} nama dari kolom '{col_target}'")
         except Exception as e:
             st.sidebar.error(f"Gagal membaca Excel: {e}")
 
     sample_name = names[0] if names else "Nama Lengkap Peserta (Contoh)"
 
-    # Hitung koordinat piksel berdasarkan persentase slider
     target_center_x = int(orig_w * (pos_x_pct / 100))
     target_center_y = int(orig_h * (pos_y_pct / 100))
     allowed_max_w = int(orig_w * (max_w_pct / 100))
     allowed_max_h = int(orig_h * 0.25)
 
-    # 🌟 RENDER LIVE PREVIEW
     st.subheader("👁️ Live Preview Sertifikat")
-    st.caption("Ubah slider posisi atau warna di sidebar, preview di bawah akan langsung ter-update.")
+    st.caption("Ubah slider posisi atau warna di sidebar sebelah kiri, tampilan preview di bawah akan langsung ter-update.")
 
     preview_img = original_img.copy()
     draw_preview = ImageDraw.Draw(preview_img)
@@ -180,27 +210,22 @@ if cert_file is not None:
 
     st.image(preview_img, caption="Pratinjau Hasil Desain", use_container_width=True)
 
-    # ==========================================
-    # PROSES SEMUA DATA & DOWNLOAD ZIP
-    # ==========================================
     st.markdown("---")
     st.subheader("🚀 Ekspor Hasil")
 
     if not names:
-        st.info("💡 Upload file Excel di sidebar kiri untuk memproses semua sertifikat secara massal.")
+        st.info("💡 Upload file Excel di sidebar kiri untuk memproses semua sertifikat secara otomatis.")
     else:
         if st.button(f"⚡ PROSES {len(names)} SERTIFIKAT (HD)"):
             progress_bar = st.progress(0)
             status_text = st.empty()
 
-            # Buat file ZIP di dalam memori RAM
             zip_buffer = io.BytesIO()
             with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
                 for idx, nama in enumerate(names, 1):
                     status_text.text(f"Memproses ({idx}/{len(names)}): {nama}")
                     progress_bar.progress(idx / len(names))
 
-                    # Render Gambar HD Asli
                     cert_hd = original_img.copy()
                     draw_hd = ImageDraw.Draw(cert_hd)
 
@@ -216,7 +241,6 @@ if cert_file is not None:
                         font=font_hd
                     )
 
-                    # Simpan ke ZIP
                     img_buffer = io.BytesIO()
                     cert_hd.save(img_buffer, format="PNG", quality=100)
                     safe_name = "".join(x for x in nama if x.isalnum() or x in " _-")
@@ -225,7 +249,6 @@ if cert_file is not None:
             status_text.success("🎉 Semua sertifikat berhasil dibuat dalam kualitas HD!")
             progress_bar.empty()
 
-            # Tombol Download ZIP
             st.download_button(
                 label="📥 DOWNLOAD SEMUA SERTIFIKAT (.ZIP)",
                 data=zip_buffer.getvalue(),
@@ -234,4 +257,4 @@ if cert_file is not None:
             )
 
 else:
-    st.info("👈 Silakan upload file desain sertifikat terlebih dahulu melalui panel di sebelah kiri.")
+    st.info("👈 Silakan buka menu sidebar di sebelah kiri untuk mengupload file desain sertifikat.")
