@@ -1,6 +1,7 @@
 import io
 import os
 import zipfile
+import urllib.request
 import pandas as pd
 from PIL import Image, ImageDraw, ImageFont
 import streamlit as st
@@ -15,7 +16,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Custom CSS Ringkas & Mobile-Friendly
+# Custom CSS
 st.markdown("""
     <style>
         #MainMenu, footer, [data-testid="stToolbarActions"], [data-testid="stAppDeployButton"] {
@@ -79,67 +80,75 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# ==========================================================
-# INISIALISASI SESSION STATE (AGAR SETELAN TERKUNCI & TIDAK RESET)
-# ==========================================================
+# Session State
 if "pos_x" not in st.session_state:
     st.session_state.pos_x = 50
 if "pos_y" not in st.session_state:
     st.session_state.pos_y = 52
 if "font_size" not in st.session_state:
     st.session_state.font_size = 90
-if "selected_font" not in st.session_state:
-    st.session_state.selected_font = "Times New Roman (Formal)"
 if "text_color" not in st.session_state:
     st.session_state.text_color = "#1E293B"
 
 # ==========================================================
-# 2. MESIN FONT RESPONSIF
+# 2. MESIN FONT ANTI-GAGAL (AUTO CLOUD + SISTEM + CUSTOM)
 # ==========================================================
+FONTS_DIR = "app_fonts"
+os.makedirs(FONTS_DIR, exist_ok=True)
+
+ONLINE_FONTS = {
+    "Great Vibes (Latin Mewah Sertifikat)": "https://raw.githubusercontent.com/google/fonts/main/ofl/greatvibes/GreatVibes-Regular.ttf",
+    "Alex Brush (Kaligrafi Halus)": "https://raw.githubusercontent.com/google/fonts/main/ofl/alexbrush/AlexBrush-Regular.ttf",
+    "Playfair Display (Formal Elegan)": "https://raw.githubusercontent.com/google/fonts/main/ofl/playfairdisplay/static/PlayfairDisplay-Bold.ttf",
+    "Cinzel (Piagam Klasik)": "https://raw.githubusercontent.com/google/fonts/main/ofl/cinzel/static/Cinzel-Bold.ttf",
+    "Roboto (Modern Bersih)": "https://raw.githubusercontent.com/google/fonts/main/apache/roboto/Roboto-Regular.ttf"
+}
+
 def get_font(font_choice, font_size, custom_font_file=None):
     font_size = int(font_size)
 
-    # Reset pointer custom font jika ada
-    if custom_font_file is not None:
+    # 1. Jika pengguna memilih font kustom dari file upload
+    if font_choice == "📁 Font Kustom (File Upload)" and custom_font_file is not None:
         try:
             custom_font_file.seek(0)
             return ImageFont.truetype(io.BytesIO(custom_font_file.getvalue()), font_size)
         except Exception:
             pass
 
-    font_dirs = [
-        os.path.join(os.environ.get('WINDIR', 'C:\\Windows'), 'Fonts'),
-        "/usr/share/fonts",
-        "/usr/share/fonts/truetype",
-        "/usr/share/fonts/truetype/dejavu",
-        "/usr/share/fonts/truetype/liberation",
-        "/usr/share/fonts/truetype/freefont",
-        "/Library/Fonts",
-        "/System/Library/Fonts",
-        "."
-    ]
-    font_files = {
-        "Times New Roman (Formal)": ["times.ttf", "Times.ttf", "LiberationSerif-Regular.ttf", "DejaVuSerif.ttf"],
-        "Georgia (Elegan)": ["georgia.ttf", "Georgia.ttf", "LiberationSerif-Regular.ttf"],
-        "Arial (Modern/Clean)": ["arial.ttf", "Arial.ttf", "LiberationSans-Regular.ttf", "DejaVuSans.ttf"],
-        "Edwardian Script (Latin Mewah)": ["edward.ttf", "EdwardianScriptITC.ttf", "times.ttf"],
-        "Vivaldi (Latin Artistik)": ["vivaldii.ttf", "Vivaldi.ttf", "times.ttf"],
-        "Monotype Corsiva (Latin Miring)": ["corsiva.ttf", "MTCORSVA.TTF", "times.ttf"]
-    }
+    # 2. Jika font pilihan berasal dari koleksi terjamin (Google Fonts)
+    if font_choice in ONLINE_FONTS:
+        file_path = os.path.join(FONTS_DIR, f"{font_choice.split()[0]}.ttf")
+        if not os.path.exists(file_path):
+            try:
+                urllib.request.urlretrieve(ONLINE_FONTS[font_choice], file_path)
+            except Exception:
+                pass
+        if os.path.exists(file_path):
+            try:
+                return ImageFont.truetype(file_path, font_size)
+            except Exception:
+                pass
 
-    for f_name in font_files.get(font_choice, ["arial.ttf", "DejaVuSans.ttf"]):
-        for d in font_dirs:
-            p = os.path.join(d, f_name)
-            if os.path.exists(p):
+    # 3. Pengecekan Font Lokal Sistem (Windows / Mac / Linux)
+    system_font_paths = [
+        os.path.join(os.environ.get('WINDIR', 'C:\\Windows'), 'Fonts'),
+        "/usr/share/fonts", "/usr/share/fonts/truetype", "/Library/Fonts"
+    ]
+    sys_map = {
+        "Times New Roman (Sistem)": ["times.ttf", "Times.ttf", "LiberationSerif-Regular.ttf"],
+        "Arial (Sistem)": ["arial.ttf", "Arial.ttf", "LiberationSans-Regular.ttf", "DejaVuSans.ttf"],
+        "Georgia (Sistem)": ["georgia.ttf", "Georgia.ttf"]
+    }
+    for f_name in sys_map.get(font_choice, ["arial.ttf"]):
+        for d in system_font_paths:
+            full_p = os.path.join(d, f_name)
+            if os.path.exists(full_p):
                 try:
-                    return ImageFont.truetype(p, font_size)
+                    return ImageFont.truetype(full_p, font_size)
                 except Exception:
                     pass
-        try:
-            return ImageFont.truetype(f_name, font_size)
-        except Exception:
-            pass
 
+    # 4. Fallback Terakhir
     try:
         return ImageFont.load_default(size=font_size)
     except TypeError:
@@ -161,7 +170,6 @@ if cert_file is not None:
     original_img = Image.open(cert_file).convert("RGB")
     orig_w, orig_h = original_img.size
 
-    # Baca Excel
     names = []
     if excel_file is not None:
         try:
@@ -180,9 +188,9 @@ if cert_file is not None:
     with col_controls:
         tab_pos, tab_style, tab_process = st.tabs(["📐 Posisi", "🎨 Font & Gaya", "🚀 Ekspor"])
 
-        # TAB 1: POSISI (st.rerun() DIHAPUS AGAR STATE TIDAK TERPUTUS)
+        # TAB 1: POSISI
         with tab_pos:
-            st.caption("📍 **Posisi Cepat (1 Baris):**")
+            st.caption("📍 **Posisi Cepat:**")
             p1, p2, p3 = st.columns(3)
             if p1.button("⬆️ Atas"):
                 st.session_state.pos_x = 50
@@ -194,7 +202,7 @@ if cert_file is not None:
                 st.session_state.pos_x = 50
                 st.session_state.pos_y = 66
 
-            st.caption("🎮 **Geser Halus (1 Baris):**")
+            st.caption("🎮 **Geser Halus:**")
             d1, d2, d3, d4 = st.columns(4)
             if d1.button("⬅️ Kiri"):
                 st.session_state.pos_x = max(5, st.session_state.pos_x - 3)
@@ -205,25 +213,27 @@ if cert_file is not None:
             if d4.button("➡️ Kanan"):
                 st.session_state.pos_x = min(95, st.session_state.pos_x + 3)
 
-        # TAB 2: FONT & GAYA (SEMUA DIBERI KEY AGAR TIDAK PERNAH RESET)
+        # TAB 2: FONT & GAYA
         with tab_style:
-            font_options = [
-                "Times New Roman (Formal)",
-                "Georgia (Elegan)",
-                "Arial (Modern/Clean)",
-                "Edwardian Script (Latin Mewah)",
-                "Vivaldi (Latin Artistik)",
-                "Monotype Corsiva (Latin Miring)"
-            ]
-            st.selectbox("Pilih Jenis Font:", font_options, key="selected_font")
+            custom_ttf = st.file_uploader("Upload Font Sendiri (.ttf/.otf)", type=["ttf", "otf"], key="custom_font")
             
+            # Susun daftar opsi font
+            font_options = list(ONLINE_FONTS.keys()) + [
+                "Times New Roman (Sistem)",
+                "Arial (Sistem)",
+                "Georgia (Sistem)"
+            ]
+            if custom_ttf is not None:
+                font_options.insert(0, "📁 Font Kustom (File Upload)")
+
+            # Selectbox font
+            selected_font = st.selectbox("Pilih Jenis Font:", font_options, key="selected_font")
+
             f_col1, f_col2 = st.columns([1, 2.2])
             with f_col1:
                 st.color_picker("Warna Teks:", key="text_color")
             with f_col2:
                 st.slider("Ukuran Font (px):", min_value=25, max_value=220, key="font_size")
-            
-            custom_ttf = st.file_uploader("Upload Font Sendiri (.ttf)", type=["ttf", "otf"], key="custom_font")
 
         # TAB 3: EKSPOR DATA
         with tab_process:
@@ -241,13 +251,13 @@ if cert_file is not None:
         preview_img = original_img.copy()
         draw_preview = ImageDraw.Draw(preview_img)
 
-        # Mengambil font & warna langsung dari session_state terkini
+        # Mengambil font sesuai pilihan dropdown saat ini
         font_preview = get_font(st.session_state.selected_font, st.session_state.font_size, custom_ttf)
         bbox = draw_preview.textbbox((0, 0), sample_name, font=font_preview)
         tw = bbox[2] - bbox[0]
         th = bbox[3] - bbox[1]
 
-        # Render teks di target posisi
+        # Render teks di tengah target
         draw_preview.text(
             (target_center_x - (tw / 2), target_center_y - (th / 2)),
             sample_name,
@@ -255,7 +265,7 @@ if cert_file is not None:
             font=font_preview
         )
 
-        st.image(preview_img, caption=f"Pratinjau ({st.session_state.font_size}px, X:{st.session_state.pos_x}% Y:{st.session_state.pos_y}%)", use_container_width=True)
+        st.image(preview_img, caption=f"Pratinjau ({st.session_state.selected_font} - {st.session_state.font_size}px)", use_container_width=True)
 
     # --- EKSEKUSI PEMBUATAN BATCH ZIP ---
     if cert_file is not None and names and 'btn_start' in locals() and btn_start:
