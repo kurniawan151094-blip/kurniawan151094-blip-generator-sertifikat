@@ -4,6 +4,7 @@ import zipfile
 import pandas as pd
 from PIL import Image, ImageDraw, ImageFont
 import streamlit as st
+from streamlit_drawable_canvas import st_canvas
 
 # ==========================================================
 # 1. KONFIGURASI HALAMAN
@@ -12,29 +13,18 @@ st.set_page_config(
     page_title="CertifiKit Studio",
     page_icon="⚡",
     layout="wide",
-    initial_sidebar_state="collapsed"  # Sidebar otomatis disembunyikan
+    initial_sidebar_state="collapsed"
 )
 
-# ==========================================================
-# 2. CUSTOM CSS KHUSUS TAMPILAN HP (MOBILE-FIRST)
-# ==========================================================
+# Custom CSS Modern & Bersih
 st.markdown("""
     <style>
-        /* Sembunyikan menu bawaan Streamlit & footer */
         #MainMenu, footer, [data-testid="stToolbarActions"], [data-testid="stAppDeployButton"] {
             display: none !important;
         }
-        header {
-            background: transparent !important;
-        }
-
-        /* Padding halaman dibuat sangat compact di HP */
-        .block-container {
-            padding: 0.8rem 1rem 2rem 1rem !important;
-            max-width: 100% !important;
-        }
-
-        /* Header / Judul Kecil & Rapi */
+        header { background: transparent !important; }
+        .block-container { padding: 0.8rem 1rem 2rem 1rem !important; }
+        
         .app-header {
             display: flex;
             align-items: center;
@@ -43,41 +33,9 @@ st.markdown("""
             padding-bottom: 0.5rem;
             border-bottom: 1px solid #334155;
         }
-        .app-title {
-            font-size: 1.25rem !important;
-            font-weight: 800;
-            color: #38BDF8;
-            margin: 0;
-        }
-        .app-badge {
-            background-color: #0C4A6E;
-            color: #38BDF8;
-            font-size: 0.75rem;
-            padding: 2px 8px;
-            border-radius: 6px;
-            font-weight: 600;
-        }
-
-        /* Styling Tab Menu agar mudah disentuh jempol */
-        .stTabs [data-baseweb="tab-list"] {
-            gap: 4px;
-            background-color: #1E293B;
-            padding: 4px;
-            border-radius: 10px;
-        }
-        .stTabs [data-baseweb="tab"] {
-            padding: 8px 12px !important;
-            font-size: 0.85rem !important;
-            font-weight: 600 !important;
-            border-radius: 8px !important;
-            color: #94A3B8 !important;
-        }
-        .stTabs [aria-selected="true"] {
-            background-color: #E11D48 !important;
-            color: white !important;
-        }
-
-        /* Tombol Ekspor Utama */
+        .app-title { font-size: 1.2rem !important; font-weight: 800; color: #38BDF8; margin: 0; }
+        .app-badge { background-color: #0C4A6E; color: #38BDF8; font-size: 0.75rem; padding: 2px 8px; border-radius: 6px; font-weight: 600; }
+        
         .stButton>button {
             width: 100%;
             background-color: #E11D48;
@@ -91,16 +49,15 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Header Kompak
 st.markdown("""
     <div class="app-header">
         <span class="app-title">⚡ CertifiKit Studio</span>
-        <span class="app-badge">HD Generator</span>
+        <span class="app-badge">Interactive Canvas</span>
     </div>
 """, unsafe_allow_html=True)
 
 # ==========================================================
-# 3. ENGINE FONT
+# 2. MESIN FONT
 # ==========================================================
 def get_font(font_choice, font_size, custom_font_file=None):
     if custom_font_file is not None:
@@ -117,7 +74,6 @@ def get_font(font_choice, font_size, custom_font_file=None):
         "/usr/share/fonts/truetype/liberation",
         "."
     ]
-    
     font_files = {
         "Times New Roman (Formal)": ["times.ttf", "Times.ttf", "LiberationSerif-Regular.ttf"],
         "Georgia (Elegan)": ["georgia.ttf", "Georgia.ttf"],
@@ -126,9 +82,7 @@ def get_font(font_choice, font_size, custom_font_file=None):
         "Vivaldi (Latin Artistik)": ["vivaldii.ttf", "Vivaldi.ttf"],
         "Monotype Corsiva (Latin Miring)": ["corsiva.ttf", "MTCORSVA.TTF"]
     }
-
-    selected_files = font_files.get(font_choice, ["arial.ttf"])
-    for f_name in selected_files:
+    for f_name in font_files.get(font_choice, ["arial.ttf"]):
         for d in font_dirs:
             p = os.path.join(d, f_name)
             if os.path.exists(p):
@@ -140,11 +94,10 @@ def get_font(font_choice, font_size, custom_font_file=None):
             return ImageFont.truetype(f_name, font_size)
         except Exception:
             pass
-
     return ImageFont.load_default()
 
 def get_auto_fit_font(nama, max_w, max_h, max_allowed_font, font_choice, custom_font_file=None):
-    font_size = min(max_allowed_font, int(max_h * 0.8))
+    font_size = min(max_allowed_font, int(max_h * 0.85))
     if font_size < 12:
         font_size = 12
 
@@ -156,34 +109,29 @@ def get_auto_fit_font(nama, max_w, max_h, max_allowed_font, font_choice, custom_
         text_w = bbox[2] - bbox[0]
         text_h = bbox[3] - bbox[1]
 
-        if text_w <= max_w and text_h <= max_h:
+        if text_w <= (max_w * 0.95) and text_h <= (max_h * 0.85):
             return font
         font_size -= 2
 
     return get_font(font_choice, font_size, custom_font_file)
 
 # ==========================================================
-# 4. AREA UPLOAD CEPAT (JIKA BELUM ADA FILE)
+# 3. AREA UPLOAD FILE
 # ==========================================================
-# Jika sertifikat belum di-upload, tampilkan kotak upload yang jelas
-if "cert_image" not in st.session_state:
-    st.session_state.cert_image = None
-
-# Gunakan container responsif
-col_up1, col_up2 = st.columns(2)
-with col_up1:
-    cert_file = st.file_uploader("1. Upload Desain Sertifikat (JPG/PNG)", type=["png", "jpg", "jpeg"])
-with col_up2:
-    excel_file = st.file_uploader("2. Upload File Excel (.xlsx)", type=["xlsx", "xls"])
+col_u1, col_u2 = st.columns(2)
+with col_u1:
+    cert_file = st.file_uploader("1. Desain Sertifikat (JPG/PNG)", type=["png", "jpg", "jpeg"])
+with col_u2:
+    excel_file = st.file_uploader("2. File Excel (.xlsx)", type=["xlsx", "xls"])
 
 # ==========================================================
-# 5. TAMPILAN KERJA (PREVIEW DI ATAS / SEJAJAR KONTROL)
+# 4. KANVAS INTERAKTIF & PENGATURAN
 # ==========================================================
 if cert_file is not None:
     original_img = Image.open(cert_file)
     orig_w, orig_h = original_img.size
 
-    # Baca nama dari Excel
+    # Baca Excel
     names = []
     if excel_file is not None:
         try:
@@ -194,74 +142,94 @@ if cert_file is not None:
         except Exception:
             pass
 
-    sample_name = names[0] if names else "Nama Lengkap Peserta (Contoh)"
+    sample_name = names[0] if names else "Nama Peserta Sertifikat"
 
-    # Di PC tampil 2 kolom sejajar, di HP otomatis bertumpuk (Preview di atas, kontrol di bawah)
-    col_preview, col_controls = st.columns([1.2, 1], gap="medium")
+    # Layout: Kanvas di kiri, Pilihan Gaya & Ekspor di kanan
+    col_canvas, col_tools = st.columns([1.3, 1], gap="medium")
 
-    # --- PANEL KONTROL DENGAN SISTEM TAB (MUDAH DI HP) ---
-    with col_controls:
-        tab_pos, tab_font, tab_export = st.tabs(["📐 Posisi", "🎨 Font & Warna", "🚀 Ekspor"])
+    with col_tools:
+        st.subheader("🎨 Pilihan Font & Warna")
+        font_options = [
+            "Times New Roman (Formal)",
+            "Georgia (Elegan)",
+            "Arial (Modern/Clean)",
+            "Edwardian Script (Latin Mewah)",
+            "Vivaldi (Latin Artistik)",
+            "Monotype Corsiva (Latin Miring)"
+        ]
+        selected_font = st.selectbox("Pilih Font:", font_options)
+        custom_ttf = st.file_uploader("Upload Font (.ttf)", type=["ttf", "otf"])
 
-        with tab_pos:
-            st.caption("Geser slider untuk atur posisi teks secara presisi:")
-            pos_x_pct = st.slider("Posisi Horizontal (Kiri ➔ Kanan %):", 0, 100, 50)
-            pos_y_pct = st.slider("Posisi Vertikal (Atas ➔ Bawah %):", 0, 100, 55)
-            max_w_pct = st.slider("Batas Lebar Area Teks (%):", 20, 95, 75)
+        c_w1, c_w2 = st.columns(2)
+        with c_w1:
+            text_color = st.color_picker("Warna Teks:", "#1E293B")
+        with c_w2:
+            max_font_size = st.number_input("Max Font (px):", min_value=20, max_value=250, value=110, step=5)
 
-        with tab_font:
-            font_options = [
-                "Times New Roman (Formal)",
-                "Georgia (Elegan)",
-                "Arial (Modern/Clean)",
-                "Edwardian Script (Latin Mewah)",
-                "Vivaldi (Latin Artistik)",
-                "Monotype Corsiva (Latin Miring)"
-            ]
-            selected_font = st.selectbox("Pilihan Font:", font_options)
-            custom_ttf = st.file_uploader("Upload Font Sendiri (.ttf)", type=["ttf", "otf"])
+        st.markdown("---")
+        mode_canvas = st.radio("Mode Kursor Kanvas:", ["Tarik Kotak Baru (Draw)", "Geser / Perbesar Kotak (Transform)"], horizontal=True)
 
-            c_col1, c_col2 = st.columns(2)
-            with c_col1:
-                text_color = st.color_picker("Warna Teks:", "#1E293B")
-            with c_col2:
-                max_font_size = st.number_input("Max Font (px):", min_value=20, max_value=250, value=95, step=5)
+    with col_canvas:
+        st.subheader("🖱️ Kanvas Sertifikat Langsung")
+        st.caption("👉 **Tarik kotak** dengan jari/mouse pada gambar. Kotak bisa digeser atau diubah ukurannya!")
 
-        with tab_export:
-            if not names:
-                st.warning("⚠️ Upload file Excel di atas untuk mulai membuat sertifikat massal.")
-            else:
-                st.success(f"✓ Siap memproses **{len(names)} sertifikat**")
-                btn_process = st.button(f"⚡ PROSES SEMUA SERTIFIKAT ({len(names)} FILE)")
+        # Hitung ukuran kanvas web (skala 650px agar pas di layar laptop & HP)
+        display_w = 650
+        scale_ratio = orig_w / display_w
+        display_h = int(orig_h / scale_ratio)
 
-    # --- AREA PREVIEW GAMBAR ---
-    with col_preview:
-        target_center_x = int(orig_w * (pos_x_pct / 100))
-        target_center_y = int(orig_h * (pos_y_pct / 100))
-        allowed_max_w = int(orig_w * (max_w_pct / 100))
-        allowed_max_h = int(orig_h * 0.25)
+        preview_bg = original_img.resize((display_w, display_h), Image.Resampling.LANCZOS)
 
-        preview_img = original_img.copy()
-        draw_preview = ImageDraw.Draw(preview_img)
-
-        font_preview = get_auto_fit_font(sample_name, allowed_max_w, allowed_max_h, max_font_size, selected_font, custom_ttf)
-        bbox = draw_preview.textbbox((0, 0), sample_name, font=font_preview)
-        text_w = bbox[2] - bbox[0]
-        text_h = bbox[3] - bbox[1]
-
-        draw_preview.text(
-            (target_center_x - (text_w / 2), target_center_y - (text_h / 2)),
-            sample_name,
-            fill=text_color,
-            font=font_preview
+        # Kanvas Interaktif Streamlit
+        drawing_mode = "rect" if "Draw" in mode_canvas else "transform"
+        
+        canvas_result = st_canvas(
+            fill_color="rgba(56, 189, 248, 0.2)",  # Warna transparan kotak seleksi
+            stroke_width=2,
+            stroke_color="#38BDF8",
+            background_image=preview_bg,
+            update_streamlit=True,
+            height=display_h,
+            width=display_w,
+            drawing_mode=drawing_mode,
+            key="cert_canvas"
         )
 
-        st.image(preview_img, caption="Pratinjau Hasil Desain (Live Preview)", use_container_width=True)
+    # Membaca data koordinat kotak dari kanvas
+    box_coords = None
+    if canvas_result.json_data is not None and len(canvas_result.json_data["objects"]) > 0:
+        # Ambil objek kotak terakhir
+        rect = canvas_result.json_data["objects"][-1]
+        
+        c_left = rect.get("left", 0)
+        c_top = rect.get("top", 0)
+        c_width = rect.get("width", 0) * rect.get("scaleX", 1)
+        c_height = rect.get("height", 0) * rect.get("scaleY", 1)
 
-    # --- PROSES GENERATE JIKA TOMBOL DIKLIK ---
-    with col_controls:
-        with tab_export:
-            if names and 'btn_process' in locals() and btn_process:
+        if c_width > 20 and c_height > 10:
+            # Konversi skala kanvas ke skala HD asli gambar
+            hd_x = int(c_left * scale_ratio)
+            hd_y = int(c_top * scale_ratio)
+            hd_w = int(c_width * scale_ratio)
+            hd_h = int(c_height * scale_ratio)
+            box_coords = (hd_x, hd_y, hd_w, hd_h)
+
+    # Panel Ekspor
+    with col_tools:
+        st.markdown("---")
+        st.subheader("🚀 Proses Data")
+        
+        if box_coords is None:
+            st.info("👆 Buat area kotak nama terlebih dahulu di kanvas sebelah kiri.")
+        elif not names:
+            st.warning("⚠️ Upload file Excel di atas untuk memproses nama-nama peserta.")
+        else:
+            st.success(f"✓ Area terkunci! Siap memproses **{len(names)} sertifikat HD**.")
+            if st.button(f"⚡ GENERATE {len(names)} SERTIFIKAT (HD)"):
+                hd_x, hd_y, hd_w, hd_h = box_coords
+                center_box_x = hd_x + (hd_w / 2)
+                center_box_y = hd_y + (hd_h / 2)
+
                 progress_bar = st.progress(0)
                 status_text = st.empty()
 
@@ -274,13 +242,13 @@ if cert_file is not None:
                         cert_hd = original_img.copy()
                         draw_hd = ImageDraw.Draw(cert_hd)
 
-                        font_hd = get_auto_fit_font(nama, allowed_max_w, allowed_max_h, max_font_size, selected_font, custom_ttf)
+                        font_hd = get_auto_fit_font(nama, hd_w, hd_h, max_font_size, selected_font, custom_ttf)
                         bbox_hd = draw_hd.textbbox((0, 0), nama, font=font_hd)
                         tw = bbox_hd[2] - bbox_hd[0]
                         th = bbox_hd[3] - bbox_hd[1]
 
                         draw_hd.text(
-                            (target_center_x - (tw / 2), target_center_y - (th / 2)),
+                            (center_box_x - (tw / 2), center_box_y - (th / 2)),
                             nama,
                             fill=text_color,
                             font=font_hd
@@ -291,15 +259,15 @@ if cert_file is not None:
                         safe_name = "".join(x for x in nama if x.isalnum() or x in " _-")
                         zip_file.writestr(f"Sertifikat_{safe_name}.png", img_buffer.getvalue())
 
-                status_text.success("🎉 Berhasil selesai dibuat!")
+                status_text.success("🎉 Berhasil dibuat dalam kualitas HD!")
                 progress_bar.empty()
 
                 st.download_button(
-                    label="📥 DOWNLOAD FILE ZIP",
+                    label="📥 DOWNLOAD SEMUA SERTIFIKAT (.ZIP)",
                     data=zip_buffer.getvalue(),
-                    file_name="Sertifikat_HD.zip",
+                    file_name="Hasil_Sertifikat_HD.zip",
                     mime="application/zip"
                 )
 
 else:
-    st.info("👆 Mulai dengan mengupload desain sertifikat Anda di kotak atas.")
+    st.info("👆 Silakan upload file desain sertifikat Anda di atas untuk membuka kanvas.")
