@@ -16,7 +16,6 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Custom CSS
 st.markdown("""
     <style>
         #MainMenu, footer, [data-testid="stToolbarActions"], [data-testid="stAppDeployButton"] {
@@ -76,11 +75,87 @@ st.markdown("""
 st.markdown("""
     <div class="app-header">
         <span class="app-title">⚡ CertifiKit Studio</span>
-        <span class="app-badge">Compact Mobile</span>
+        <span class="app-badge">55+ Fonts Pro</span>
     </div>
 """, unsafe_allow_html=True)
 
-# Session State
+# ==========================================================
+# 2. KATALOG FONT LENGKAP (55+ FONT WEDDING & SERTIFIKAT)
+# ==========================================================
+BASE_URL = "https://raw.githubusercontent.com/google/fonts/main/"
+
+FONT_CATEGORIES = {
+    "💍 Wedding & Kaligrafi Mewah": {
+        "Great Vibes (Wedding Klasik)": BASE_URL + "ofl/greatvibes/GreatVibes-Regular.ttf",
+        "Allura (Elegan Mengalir)": BASE_URL + "ofl/allura/Allura-Regular.ttf",
+        "Alex Brush (Kaligrafi Halus)": BASE_URL + "ofl/alexbrush/AlexBrush-Regular.ttf",
+        "Pinyon Script (Aristokrat Ningrat)": BASE_URL + "ofl/pinyonscript/PinyonScript-Regular.ttf",
+        "Parisienne (Romantis Prancis)": BASE_URL + "ofl/parisienne/Parisienne-Regular.ttf",
+        "Tangerine (Italic Chancery Anggun)": BASE_URL + "ofl/tangerine/Tangerine-Regular.ttf",
+        "Italianno (Kaligrafi Italia)": BASE_URL + "ofl/italianno/Italianno-Regular.ttf",
+        "Monsieur La Doulaise (Vintage Mewah)": BASE_URL + "ofl/monsieurladoulaise/MonsieurLaDoulaise-Regular.ttf",
+        "Herr Von Muellerhoff (Spencerian Halus)": BASE_URL + "ofl/herrvonmuellerhoff/HerrVonMuellerhoff-Regular.ttf",
+        "Lovers Quarrel (Swash Hiasan Megah)": BASE_URL + "ofl/loversquarrel/LoversQuarrel-Regular.ttf",
+        "Mrs Saint Delafield (Kaligrafi Antik)": BASE_URL + "ofl/mrssaintdelafield/MrsSaintDelafield-Regular.ttf",
+        "Miss Fajardose (Filigri Hias)": BASE_URL + "ofl/missfajardose/MissFajardose-Regular.ttf",
+        "Rouge Script (Lembut Anggun)": BASE_URL + "ofl/rougescript/RougeScript-Regular.ttf",
+        "Petit Formal Script (Formal Elegan)": BASE_URL + "ofl/petitformalscript/PetitFormalScript-Regular.ttf",
+        "Qwigley (Lengkung Ramping)": BASE_URL + "ofl/qwigley/Qwigley-Regular.ttf",
+        "Ruthie (Lincah Bersambung)": BASE_URL + "ofl/ruthie/Ruthie-Regular.ttf",
+        "Meie Script (Klasik Jerman)": BASE_URL + "ofl/meiescript/MeieScript-Regular.ttf",
+        "MonteCarlo (Dekoratif Pesta)": BASE_URL + "ofl/montecarlo/MonteCarlo-Regular.ttf",
+        "Felipa (Gaya Cursive Spanyol)": BASE_URL + "ofl/felipa/Felipa-Regular.ttf",
+        "Engagement (Undangan Pernikahan)": BASE_URL + "ofl/engagement/Engagement-Regular.ttf",
+        "Bilbo Swash Caps (Kapital Hias)": BASE_URL + "ofl/bilboswashcaps/BilboSwashCaps-Regular.ttf",
+    },
+    "🏆 Sertifikat & Piagam Formal": {
+        "Cinzel Bold (Imperial Romawi)": BASE_URL + "ofl/cinzel/static/Cinzel-Bold.ttf",
+        "Cinzel Decorative (Piagam Ukir)": BASE_URL + "ofl/cinzeldecorative/CinzelDecorative-Bold.ttf",
+        "Playfair Display Bold (Serif Mewah)": BASE_URL + "ofl/playfairdisplay/static/PlayfairDisplay-Bold.ttf",
+        "Playfair Display Italic (Serif Miring)": BASE_URL + "ofl/playfairdisplay/static/PlayfairDisplay-Italic.ttf",
+        "Cormorant Garamond (Klasik Kerajaan)": BASE_URL + "ofl/cormorantgaramond/static/CormorantGaramond-Bold.ttf",
+        "EB Garamond Bold (Presisi Akademik)": BASE_URL + "ofl/ebgaramond/static/EBGaramond-Bold.ttf",
+        "Prata (Serif Kontras Tinggi)": BASE_URL + "ofl/prata/Prata-Regular.ttf",
+        "Marcellus (Monumen Klasik)": BASE_URL + "ofl/marcellus/Marcellus-Regular.ttf",
+        "Bellefair (Serif Ramping Elegan)": BASE_URL + "ofl/bellefair/Bellefair-Regular.ttf",
+        "Castoro (Serif Buku Berwibawa)": BASE_URL + "ofl/castoro/Castoro-Regular.ttf",
+        "Lora Bold (Harmonis & Tajam)": BASE_URL + "ofl/lora/static/Lora-Bold.ttf",
+        "Merriweather Bold (Kokoh Formal)": BASE_URL + "ofl/merriweather/Merriweather-Bold.ttf"
+    },
+    "✍️ Signature & Handwritten": {
+        "Arizonia (Kuas Artistik)": BASE_URL + "ofl/arizonia/Arizonia-Regular.ttf",
+        "Sacramento (Monoline Kasual)": BASE_URL + "ofl/sacramento/Sacramento-Regular.ttf",
+        "Satisfy (Tanda Tangan Lembut)": BASE_URL + "ofl/satisfy/Satisfy-Regular.ttf",
+        "Rochester (Gaya Retro Victoria)": BASE_URL + "ofl/rochester/Rochester-Regular.ttf",
+        "Marck Script (Tulisan Tangan Pena)": BASE_URL + "ofl/marckscript/MarckScript-Regular.ttf",
+        "Yellowtail (Kuas Tebal Kasual)": BASE_URL + "ofl/yellowtail/Yellowtail-Regular.ttf",
+        "Courgette (Pena Miring Halus)": BASE_URL + "ofl/courgette/Courgette-Regular.ttf",
+        "Damion (Gaya Casual 50-an)": BASE_URL + "ofl/damion/Damion-Regular.ttf",
+        "Kaushan Script (Kuas Dinamis)": BASE_URL + "ofl/kaushanscript/KaushanScript-Regular.ttf",
+        "Niconne (Feminim Bersahabat)": BASE_URL + "ofl/niconne/Niconne-Regular.ttf",
+        "Bad Script (Tulisan Buku Catatan)": BASE_URL + "ofl/badscript/BadScript-Regular.ttf",
+        "Cookie (Gaya Pin-up Manis)": BASE_URL + "ofl/cookie/Cookie-Regular.ttf",
+        "Stalemate (Skrip Cepat Mengalir)": BASE_URL + "ofl/stalemate/Stalemate-Regular.ttf",
+        "Homemade Apple (Tanda Tangan Tinta)": BASE_URL + "ofl/homemadeapple/HomemadeApple-Regular.ttf",
+        "Caveat Bold (Spidol Tulisan Tangan)": BASE_URL + "ofl/caveat/static/Caveat-Bold.ttf",
+        "La Belle Aurore (Coretan Tangan Alami)": BASE_URL + "ofl/labelleaurore/LaBelleAurore.ttf"
+    },
+    "✨ Modern & Minimalis": {
+        "Montserrat Bold (Modern Berani)": BASE_URL + "ofl/montserrat/static/Montserrat-Bold.ttf",
+        "Bebas Neue (Kapital Headline Kuat)": BASE_URL + "ofl/bebasneue/BebasNeue-Regular.ttf",
+        "Poppins Bold (Geometris Bersih)": BASE_URL + "ofl/poppins/Poppins-Bold.ttf",
+        "Oswald Bold (Ramping Tegas)": BASE_URL + "ofl/oswald/static/Oswald-Bold.ttf",
+        "Raleway Bold (Modern Berkelas)": BASE_URL + "ofl/raleway/static/Raleway-Bold.ttf",
+        "Lato Bold (Humanis Seimbang)": BASE_URL + "ofl/lato/Lato-Bold.ttf"
+    },
+    "💻 Font Sistem": {
+        "Times New Roman (Sistem)": "times.ttf",
+        "Arial (Sistem)": "arial.ttf",
+        "Georgia (Sistem)": "georgia.ttf"
+    }
+}
+
+# Inisialisasi State
 if "pos_x" not in st.session_state:
     st.session_state.pos_x = 50
 if "pos_y" not in st.session_state:
@@ -89,66 +164,61 @@ if "font_size" not in st.session_state:
     st.session_state.font_size = 90
 if "text_color" not in st.session_state:
     st.session_state.text_color = "#1E293B"
+if "font_cat" not in st.session_state:
+    st.session_state.font_cat = "💍 Wedding & Kaligrafi Mewah"
+if "selected_font" not in st.session_state:
+    st.session_state.selected_font = "Great Vibes (Wedding Klasik)"
 
-# ==========================================================
-# 2. MESIN FONT ANTI-GAGAL (AUTO CLOUD + SISTEM + CUSTOM)
-# ==========================================================
+# Folder cache lokal
 FONTS_DIR = "app_fonts"
 os.makedirs(FONTS_DIR, exist_ok=True)
 
-ONLINE_FONTS = {
-    "Great Vibes (Latin Mewah Sertifikat)": "https://raw.githubusercontent.com/google/fonts/main/ofl/greatvibes/GreatVibes-Regular.ttf",
-    "Alex Brush (Kaligrafi Halus)": "https://raw.githubusercontent.com/google/fonts/main/ofl/alexbrush/AlexBrush-Regular.ttf",
-    "Playfair Display (Formal Elegan)": "https://raw.githubusercontent.com/google/fonts/main/ofl/playfairdisplay/static/PlayfairDisplay-Bold.ttf",
-    "Cinzel (Piagam Klasik)": "https://raw.githubusercontent.com/google/fonts/main/ofl/cinzel/static/Cinzel-Bold.ttf",
-    "Roboto (Modern Bersih)": "https://raw.githubusercontent.com/google/fonts/main/apache/roboto/Roboto-Regular.ttf"
-}
-
-def get_font(font_choice, font_size, custom_font_file=None):
+# Mesin font dinamis
+def get_font(font_name, font_size, custom_font_file=None):
     font_size = int(font_size)
 
-    # 1. Jika pengguna memilih font kustom dari file upload
-    if font_choice == "📁 Font Kustom (File Upload)" and custom_font_file is not None:
+    # 1. Custom font upload
+    if font_name == "📁 Font Kustom (File Upload)" and custom_font_file is not None:
         try:
             custom_font_file.seek(0)
             return ImageFont.truetype(io.BytesIO(custom_font_file.getvalue()), font_size)
         except Exception:
             pass
 
-    # 2. Jika font pilihan berasal dari koleksi terjamin (Google Fonts)
-    if font_choice in ONLINE_FONTS:
-        file_path = os.path.join(FONTS_DIR, f"{font_choice.split()[0]}.ttf")
-        if not os.path.exists(file_path):
+    # 2. Cari URL dari katalog 55+ font
+    font_url = None
+    for cat, fonts in FONT_CATEGORIES.items():
+        if font_name in fonts:
+            font_url = fonts[font_name]
+            break
+
+    if font_url and font_url.startswith("http"):
+        safe_filename = "".join(c for c in font_name if c.isalnum()) + ".ttf"
+        local_path = os.path.join(FONTS_DIR, safe_filename)
+        if not os.path.exists(local_path):
             try:
-                urllib.request.urlretrieve(ONLINE_FONTS[font_choice], file_path)
+                urllib.request.urlretrieve(font_url, local_path)
             except Exception:
                 pass
-        if os.path.exists(file_path):
+        if os.path.exists(local_path):
             try:
-                return ImageFont.truetype(file_path, font_size)
+                return ImageFont.truetype(local_path, font_size)
             except Exception:
                 pass
 
-    # 3. Pengecekan Font Lokal Sistem (Windows / Mac / Linux)
-    system_font_paths = [
+    # 3. Font sistem OS
+    system_paths = [
         os.path.join(os.environ.get('WINDIR', 'C:\\Windows'), 'Fonts'),
         "/usr/share/fonts", "/usr/share/fonts/truetype", "/Library/Fonts"
     ]
-    sys_map = {
-        "Times New Roman (Sistem)": ["times.ttf", "Times.ttf", "LiberationSerif-Regular.ttf"],
-        "Arial (Sistem)": ["arial.ttf", "Arial.ttf", "LiberationSans-Regular.ttf", "DejaVuSans.ttf"],
-        "Georgia (Sistem)": ["georgia.ttf", "Georgia.ttf"]
-    }
-    for f_name in sys_map.get(font_choice, ["arial.ttf"]):
-        for d in system_font_paths:
-            full_p = os.path.join(d, f_name)
-            if os.path.exists(full_p):
-                try:
-                    return ImageFont.truetype(full_p, font_size)
-                except Exception:
-                    pass
+    for sp in system_paths:
+        p = os.path.join(sp, font_url if font_url else "arial.ttf")
+        if os.path.exists(p):
+            try:
+                return ImageFont.truetype(p, font_size)
+            except Exception:
+                pass
 
-    # 4. Fallback Terakhir
     try:
         return ImageFont.load_default(size=font_size)
     except TypeError:
@@ -213,27 +283,38 @@ if cert_file is not None:
             if d4.button("➡️ Kanan"):
                 st.session_state.pos_x = min(95, st.session_state.pos_x + 3)
 
-        # TAB 2: FONT & GAYA
+        # TAB 2: FONT & GAYA (DENGAN FILTER KATEGORI & 55+ FONT)
         with tab_style:
             custom_ttf = st.file_uploader("Upload Font Sendiri (.ttf/.otf)", type=["ttf", "otf"], key="custom_font")
-            
-            # Susun daftar opsi font
-            font_options = list(ONLINE_FONTS.keys()) + [
-                "Times New Roman (Sistem)",
-                "Arial (Sistem)",
-                "Georgia (Sistem)"
-            ]
-            if custom_ttf is not None:
-                font_options.insert(0, "📁 Font Kustom (File Upload)")
 
-            # Selectbox font
-            selected_font = st.selectbox("Pilih Jenis Font:", font_options, key="selected_font")
+            st.caption("🔍 **Pilih Koleksi & Jenis Font:**")
+            cat_options = list(FONT_CATEGORIES.keys())
+            if custom_ttf is not None:
+                cat_options.insert(0, "📁 Font Kustom (File Upload)")
+
+            selected_cat = st.selectbox("Kategori Font:", cat_options, key="font_cat")
+
+            # Ambil daftar font berdasarkan kategori yang dipilih
+            if selected_cat == "📁 Font Kustom (File Upload)":
+                font_list = ["📁 Font Kustom (File Upload)"]
+            else:
+                font_list = list(FONT_CATEGORIES[selected_cat].keys())
+
+            # Sinkronisasi pilihan font jika kategori berganti
+            if st.session_state.selected_font not in font_list:
+                st.session_state.selected_font = font_list[0]
+
+            selected_font = st.selectbox(
+                f"Pilih Font ({len(font_list)} Pilihan):",
+                font_list,
+                key="selected_font"
+            )
 
             f_col1, f_col2 = st.columns([1, 2.2])
             with f_col1:
                 st.color_picker("Warna Teks:", key="text_color")
             with f_col2:
-                st.slider("Ukuran Font (px):", min_value=25, max_value=220, key="font_size")
+                st.slider("Ukuran Font (px):", min_value=25, max_value=240, key="font_size")
 
         # TAB 3: EKSPOR DATA
         with tab_process:
@@ -251,13 +332,13 @@ if cert_file is not None:
         preview_img = original_img.copy()
         draw_preview = ImageDraw.Draw(preview_img)
 
-        # Mengambil font sesuai pilihan dropdown saat ini
+        # Muat font terpilih
         font_preview = get_font(st.session_state.selected_font, st.session_state.font_size, custom_ttf)
         bbox = draw_preview.textbbox((0, 0), sample_name, font=font_preview)
         tw = bbox[2] - bbox[0]
         th = bbox[3] - bbox[1]
 
-        # Render teks di tengah target
+        # Render teks tepat di titik target
         draw_preview.text(
             (target_center_x - (tw / 2), target_center_y - (th / 2)),
             sample_name,
@@ -265,7 +346,11 @@ if cert_file is not None:
             font=font_preview
         )
 
-        st.image(preview_img, caption=f"Pratinjau ({st.session_state.selected_font} - {st.session_state.font_size}px)", use_container_width=True)
+        st.image(
+            preview_img,
+            caption=f"Pratinjau: {st.session_state.selected_font} ({st.session_state.font_size}px)",
+            use_container_width=True
+        )
 
     # --- EKSEKUSI PEMBUATAN BATCH ZIP ---
     if cert_file is not None and names and 'btn_start' in locals() and btn_start:
@@ -275,6 +360,7 @@ if cert_file is not None:
                 status_text = st.empty()
 
                 zip_buffer = io.BytesIO()
+                # Font dimuat 1 kali untuk efisiensi ekspor massal
                 font_hd = get_font(st.session_state.selected_font, st.session_state.font_size, custom_ttf)
 
                 with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
