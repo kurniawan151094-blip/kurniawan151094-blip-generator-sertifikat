@@ -16,6 +16,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
+# Custom CSS: Memaksa Tombol Posisi Berdampingan Horizontal di Semua Layar
 st.markdown("""
     <style>
         #MainMenu, footer, [data-testid="stToolbarActions"], [data-testid="stAppDeployButton"] {
@@ -35,6 +36,7 @@ st.markdown("""
         .app-title { font-size: 1.1rem !important; font-weight: 800; color: #38BDF8; margin: 0; }
         .app-badge { background-color: #0C4A6E; color: #38BDF8; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
 
+        /* Desain Tab Menu */
         .stTabs [data-baseweb="tab-list"] {
             gap: 4px;
             background-color: #1E293B;
@@ -53,21 +55,49 @@ st.markdown("""
             border-radius: 6px;
         }
 
-        div[data-testid="column"] button {
-            padding: 0.35rem 0.2rem !important;
-            font-size: 0.85rem !important;
-            border-radius: 6px !important;
+        /* KUNCI: MEMAKSA TOMBOL POSISI SELALU HORIZONTAL BERDAMPINGAN DI HP MAUPUN PC */
+        div[data-testid="stTabsContent"] div[data-testid="stHorizontalBlock"] {
+            display: flex !important;
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
+            gap: 6px !important;
+            width: 100% !important;
+        }
+        div[data-testid="stTabsContent"] div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
+            flex: 1 1 0% !important;
+            min-width: 0 !important;
+            width: 100% !important;
         }
 
-        .stButton>button {
-            width: 100%;
-            background-color: #E11D48;
-            color: white;
-            font-weight: bold;
-            border-radius: 8px;
-            padding: 0.65rem 1rem;
-            border: none;
-            font-size: 0.95rem;
+        /* Desain Tombol Navigasi Posisi */
+        div[data-testid="stTabsContent"] div[data-testid="stHorizontalBlock"] button {
+            width: 100% !important;
+            padding: 0.45rem 0.2rem !important;
+            font-size: 0.8rem !important;
+            font-weight: 600 !important;
+            white-space: nowrap !important;
+            border-radius: 6px !important;
+            background-color: #1E293B !important;
+            color: #F1F5F9 !important;
+            border: 1px solid #334155 !important;
+            transition: all 0.15s ease-in-out !important;
+        }
+        div[data-testid="stTabsContent"] div[data-testid="stHorizontalBlock"] button:hover {
+            background-color: #334155 !important;
+            border-color: #38BDF8 !important;
+            color: #38BDF8 !important;
+        }
+
+        /* Tombol Ekspor Utama (Primary) */
+        button[kind="primary"] {
+            width: 100% !important;
+            background-color: #E11D48 !important;
+            color: white !important;
+            font-weight: bold !important;
+            border-radius: 8px !important;
+            padding: 0.65rem 1rem !important;
+            border: none !important;
+            font-size: 0.95rem !important;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -75,12 +105,12 @@ st.markdown("""
 st.markdown("""
     <div class="app-header">
         <span class="app-title">⚡ CertifiKit Studio</span>
-        <span class="app-badge">55+ Fonts Pro</span>
+        <span class="app-badge">Pro Studio</span>
     </div>
 """, unsafe_allow_html=True)
 
 # ==========================================================
-# 2. KATALOG FONT LENGKAP (55+ FONT WEDDING & SERTIFIKAT)
+# 2. KATALOG FONT (55+ FONT LENGKAP)
 # ==========================================================
 BASE_URL = "https://raw.githubusercontent.com/google/fonts/main/"
 
@@ -155,7 +185,7 @@ FONT_CATEGORIES = {
     }
 }
 
-# Inisialisasi State
+# Session State
 if "pos_x" not in st.session_state:
     st.session_state.pos_x = 50
 if "pos_y" not in st.session_state:
@@ -169,15 +199,12 @@ if "font_cat" not in st.session_state:
 if "selected_font" not in st.session_state:
     st.session_state.selected_font = "Great Vibes (Wedding Klasik)"
 
-# Folder cache lokal
 FONTS_DIR = "app_fonts"
 os.makedirs(FONTS_DIR, exist_ok=True)
 
-# Mesin font dinamis
 def get_font(font_name, font_size, custom_font_file=None):
     font_size = int(font_size)
 
-    # 1. Custom font upload
     if font_name == "📁 Font Kustom (File Upload)" and custom_font_file is not None:
         try:
             custom_font_file.seek(0)
@@ -185,7 +212,6 @@ def get_font(font_name, font_size, custom_font_file=None):
         except Exception:
             pass
 
-    # 2. Cari URL dari katalog 55+ font
     font_url = None
     for cat, fonts in FONT_CATEGORIES.items():
         if font_name in fonts:
@@ -206,7 +232,6 @@ def get_font(font_name, font_size, custom_font_file=None):
             except Exception:
                 pass
 
-    # 3. Font sistem OS
     system_paths = [
         os.path.join(os.environ.get('WINDIR', 'C:\\Windows'), 'Fonts'),
         "/usr/share/fonts", "/usr/share/fonts/truetype", "/Library/Fonts"
@@ -258,32 +283,34 @@ if cert_file is not None:
     with col_controls:
         tab_pos, tab_style, tab_process = st.tabs(["📐 Posisi", "🎨 Font & Gaya", "🚀 Ekspor"])
 
-        # TAB 1: POSISI
+        # TAB 1: POSISI (BERDAMPINGAN HORIZONTAL 1 BARIS)
         with tab_pos:
-            st.caption("📍 **Posisi Cepat:**")
+            st.caption("📍 **Posisi Cepat (Horizontal):**")
             p1, p2, p3 = st.columns(3)
-            if p1.button("⬆️ Atas"):
+            if p1.button("⬆️ Atas", use_container_width=True):
                 st.session_state.pos_x = 50
                 st.session_state.pos_y = 38
-            if p2.button("⏺️ Tengah"):
+            if p2.button("⏺️ Tengah", use_container_width=True):
                 st.session_state.pos_x = 50
                 st.session_state.pos_y = 52
-            if p3.button("⬇️ Bawah"):
+            if p3.button("⬇️ Bawah", use_container_width=True):
                 st.session_state.pos_x = 50
                 st.session_state.pos_y = 66
 
-            st.caption("🎮 **Geser Halus:**")
+            st.caption("🎮 **Geser Halus (Horizontal):**")
             d1, d2, d3, d4 = st.columns(4)
-            if d1.button("⬅️ Kiri"):
+            if d1.button("⬅️ Kiri", use_container_width=True):
                 st.session_state.pos_x = max(5, st.session_state.pos_x - 3)
-            if d2.button("⬆️ Naik"):
+            if d2.button("⬆️ Naik", use_container_width=True):
                 st.session_state.pos_y = max(5, st.session_state.pos_y - 3)
-            if d3.button("⬇️ Turun"):
+            if d3.button("⬇️ Turun", use_container_width=True):
                 st.session_state.pos_y = min(95, st.session_state.pos_y + 3)
-            if d4.button("➡️ Kanan"):
+            if d4.button("➡️ Kanan", use_container_width=True):
                 st.session_state.pos_x = min(95, st.session_state.pos_x + 3)
 
-        # TAB 2: FONT & GAYA (DENGAN FILTER KATEGORI & 55+ FONT)
+            st.markdown(f"<div style='margin-top: 8px; font-size: 0.8rem; color: #94A3B8; text-align: center; background: #0F172A; padding: 4px; border-radius: 6px; border: 1px solid #334155;'>📌 Posisi Saat Ini: <b>X: {st.session_state.pos_x}% | Y: {st.session_state.pos_y}%</b></div>", unsafe_allow_html=True)
+
+        # TAB 2: FONT & GAYA
         with tab_style:
             custom_ttf = st.file_uploader("Upload Font Sendiri (.ttf/.otf)", type=["ttf", "otf"], key="custom_font")
 
@@ -294,13 +321,11 @@ if cert_file is not None:
 
             selected_cat = st.selectbox("Kategori Font:", cat_options, key="font_cat")
 
-            # Ambil daftar font berdasarkan kategori yang dipilih
             if selected_cat == "📁 Font Kustom (File Upload)":
                 font_list = ["📁 Font Kustom (File Upload)"]
             else:
                 font_list = list(FONT_CATEGORIES[selected_cat].keys())
 
-            # Sinkronisasi pilihan font jika kategori berganti
             if st.session_state.selected_font not in font_list:
                 st.session_state.selected_font = font_list[0]
 
@@ -322,7 +347,7 @@ if cert_file is not None:
                 st.warning("⚠️ Upload file Excel di atas untuk memproses nama peserta massal.")
             else:
                 st.success(f"✓ Siap memproses **{len(names)} sertifikat HD**.")
-                btn_start = st.button(f"⚡ GENERATE {len(names)} SERTIFIKAT")
+                btn_start = st.button(f"⚡ GENERATE {len(names)} SERTIFIKAT", type="primary", use_container_width=True)
 
     # --- PANEL PREVIEW LANGSUNG ---
     with col_preview:
@@ -332,13 +357,11 @@ if cert_file is not None:
         preview_img = original_img.copy()
         draw_preview = ImageDraw.Draw(preview_img)
 
-        # Muat font terpilih
         font_preview = get_font(st.session_state.selected_font, st.session_state.font_size, custom_ttf)
         bbox = draw_preview.textbbox((0, 0), sample_name, font=font_preview)
         tw = bbox[2] - bbox[0]
         th = bbox[3] - bbox[1]
 
-        # Render teks tepat di titik target
         draw_preview.text(
             (target_center_x - (tw / 2), target_center_y - (th / 2)),
             sample_name,
@@ -348,7 +371,7 @@ if cert_file is not None:
 
         st.image(
             preview_img,
-            caption=f"Pratinjau: {st.session_state.selected_font} ({st.session_state.font_size}px)",
+            caption=f"Pratinjau: {st.session_state.selected_font} ({st.session_state.font_size}px) — X:{st.session_state.pos_x}% Y:{st.session_state.pos_y}%",
             use_container_width=True
         )
 
@@ -360,7 +383,6 @@ if cert_file is not None:
                 status_text = st.empty()
 
                 zip_buffer = io.BytesIO()
-                # Font dimuat 1 kali untuk efisiensi ekspor massal
                 font_hd = get_font(st.session_state.selected_font, st.session_state.font_size, custom_ttf)
 
                 with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
@@ -394,7 +416,8 @@ if cert_file is not None:
                     label="📥 DOWNLOAD FILE ZIP",
                     data=zip_buffer.getvalue(),
                     file_name="Hasil_Sertifikat_HD.zip",
-                    mime="application/zip"
+                    mime="application/zip",
+                    use_container_width=True
                 )
 
 else:
